@@ -10,6 +10,7 @@ import { KnowledgeBase, DomainRule } from "./knowledge_base";
 import { CognitivePatternEngine, CognitiveAnalysis, CognitiveAudience } from "./learner";
 import { OmniEqualizerEngine, DisciplinaryLens } from "./equalizer";
 import { OrthogonalPathfinder } from "./orthogonal";
+import { PreemptiveFutureEngine } from "./preemptive";
 
 export type EnhancementProfile =
   | "precision"
@@ -30,6 +31,10 @@ export type EnhancementProfile =
   | "cline_mcp"
   | "adversarial"
   | "executive"
+  | "future_deep_reasoner"
+  | "future_agent_swarm"
+  | "future_formal_verifier"
+  | "future_infinite_context"
   | "orthogonal_brainstorm";
 
 export class PromptEnhancer {
@@ -102,6 +107,14 @@ export class PromptEnhancer {
       case "orthogonal_brainstorm":
         compiled = OrthogonalPathfinder.synthesizeBrainstorm(cleanPrompt).masterBrainstormPrompt;
         break;
+      case "future_deep_reasoner":
+        compiled = this.enhanceFutureReasoner(cleanPrompt); break;
+      case "future_agent_swarm":
+        compiled = this.enhanceFutureSwarm(cleanPrompt); break;
+      case "future_formal_verifier":
+        compiled = this.enhanceFutureVerifier(cleanPrompt); break;
+      case "future_infinite_context":
+        compiled = this.enhanceFutureInfinite(cleanPrompt); break;
       default:
         compiled = this.enhancePrecision(cleanPrompt, targetRuntime, domainRule);
         break;

@@ -32,6 +32,7 @@ export class PromptWebviewProvider {
     const benchmarks = ModelBenchmarkEngine.benchmarkPrompt(originalPrompt);
     const modelTargets = benchmarks.filter(b => b.category === "model");
     const botTargets = benchmarks.filter(b => b.category === "bot");
+    const futureTargets = benchmarks.filter(b => b.category === "future");
 
     const cognitive = metrics.cognitive;
     const currentAudience = activeAudience || cognitive.audience;
@@ -700,6 +701,7 @@ export class PromptWebviewProvider {
       <div class="target-tabs">
         <button class="target-tab active" id="tab-models" onclick="switchCategory('models')">Frontier Models (8)</button>
         <button class="target-tab" id="tab-bots" onclick="switchCategory('bots')">Coding Bots (7)</button>
+        <button class="target-tab" id="tab-future" onclick="switchCategory('future')">Next-Gen &amp; Future AI (4)</button>
       </div>
 
       <!-- Models Grid -->
@@ -724,6 +726,26 @@ export class PromptWebviewProvider {
       <!-- Bots Grid -->
       <div class="targets-grid" id="grid-bots" style="display:none;">
         ${botTargets.map(t => {
+          const scoreClass = t.compatibilityScore >= 85 ? "score-green" : t.compatibilityScore >= 70 ? "score-yellow" : "score-red";
+          const isActive = activeProfile === t.profileKey;
+          return `
+          <div class="target-btn ${isActive ? 'active' : ''}" onclick="selectTarget('${t.profileKey}')" title="${t.keyStrengths.join(', ')}">
+            <div class="target-btn-top">
+              <span>${t.name}</span>
+              <span class="target-score ${scoreClass}">${t.compatibilityScore}%</span>
+            </div>
+            <div class="target-sub">
+              <span>${t.provider}</span>
+              <span>${t.latencyRating}</span>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+
+      
+      <!-- Next-Gen & Future AI Grid -->
+      <div class="targets-grid" id="grid-future" style="display:none;">
+        ${futureTargets.map(t => {
           const scoreClass = t.compatibilityScore >= 85 ? "score-green" : t.compatibilityScore >= 70 ? "score-yellow" : "score-red";
           const isActive = activeProfile === t.profileKey;
           return `
@@ -794,19 +816,32 @@ export class PromptWebviewProvider {
     function switchCategory(cat) {
       const tabModels = document.getElementById("tab-models");
       const tabBots = document.getElementById("tab-bots");
+      const tabFuture = document.getElementById("tab-future");
       const gridModels = document.getElementById("grid-models");
       const gridBots = document.getElementById("grid-bots");
+      const gridFuture = document.getElementById("grid-future");
 
       if (cat === "models") {
         tabModels.classList.add("active");
         tabBots.classList.remove("active");
+        if (tabFuture) tabFuture.classList.remove("active");
         gridModels.style.display = "grid";
         gridBots.style.display = "none";
-      } else {
+        if (gridFuture) gridFuture.style.display = "none";
+      } else if (cat === "bots") {
         tabBots.classList.add("active");
         tabModels.classList.remove("active");
+        if (tabFuture) tabFuture.classList.remove("active");
         gridBots.style.display = "grid";
         gridModels.style.display = "none";
+        if (gridFuture) gridFuture.style.display = "none";
+      } else {
+        if (tabFuture) tabFuture.classList.add("active");
+        tabModels.classList.remove("active");
+        tabBots.classList.remove("active");
+        if (gridFuture) gridFuture.style.display = "grid";
+        gridModels.style.display = "none";
+        gridBots.style.display = "none";
       }
     }
 

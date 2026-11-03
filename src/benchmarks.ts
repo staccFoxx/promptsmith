@@ -10,7 +10,7 @@ import { EnhancementProfile } from "./enhancer";
 export interface BenchmarkTarget {
   id: string;
   name: string;
-  category: "model" | "bot";
+  category: "model" | "bot" | "future";
   provider: string;
   badgeColor: string;
   compatibilityScore: number;
@@ -467,6 +467,10 @@ export class ModelBenchmarkEngine {
       { id: "copilot-edits", name: "GitHub Copilot Edits", cat: "bot" as const, prov: "GitHub / MS", color: "#22c55e", rate: "Fast" as const, cost: "Subscription", prof: "copilot_edits" as EnhancementProfile },
       { id: "aider", name: "Aider Pair Programmer", cat: "bot" as const, prov: "Open Source", color: "#f43f5e", rate: "Autonomous Multi-Step" as const, cost: "BYOK", prof: "aider_diff" as EnhancementProfile },
       { id: "devin", name: "Devin Autonomous", cat: "bot" as const, prov: "Cognition", color: "#84cc16", rate: "Autonomous Multi-Step" as const, cost: "Enterprise", prof: "devin_fullstack" as EnhancementProfile },
+            { id: "future-deep-reasoner", name: "Next-Gen Deep Reasoner (o3+ / Claude 4 / Gemini 3)", cat: "future" as const, prov: "Frontier AGIs", color: "#ec4899", rate: "Reasoning Delay" as const, cost: "Adaptive Compute", prof: "future_deep_reasoner" as EnhancementProfile },
+      { id: "future-agent-swarm", name: "Autonomous Agent Swarm (Multi-Agent AGI)", cat: "future" as const, prov: "Autonomous Swarms", color: "#8b5cf6", rate: "Autonomous Multi-Step" as const, cost: "Swarm Compute", prof: "future_agent_swarm" as EnhancementProfile },
+      { id: "future-formal-verifier", name: "Neuro-Symbolic Verifier (Lean 4 / Z3 SAT AI)", cat: "future" as const, prov: "Formal Solvers", color: "#10b981", rate: "Fast" as const, cost: "SAT Compute", prof: "future_formal_verifier" as EnhancementProfile },
+      { id: "future-infinite-context", name: "Infinite-Context Engine (10M+ Streamer)", cat: "future" as const, prov: "Streaming AGIs", color: "#06b6d4", rate: "Ultra Fast" as const, cost: "Linear Attention", prof: "future_infinite_context" as EnhancementProfile },
       { id: "cline-roo", name: "Cline / Roo Code", cat: "bot" as const, prov: "Open Source", color: "#eab308", rate: "Autonomous Multi-Step" as const, cost: "BYOK", prof: "cline_mcp" as EnhancementProfile }
     ];
 
