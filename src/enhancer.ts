@@ -1,8 +1,9 @@
 /**
- * PromptSmith AI - Precision Multi-Model Prompt Transformation Engine
- * Optimizes prompts across 7 distinct profiles tailored to the active IDE/device,
- * frontier model architectures (Claude 3.5, o1/o3, GPT-4o, Gemini 2.0, DeepSeek R1),
- * and enriched by our multi-domain training corpus.
+ * PromptSmith AI - Precision Multi-Model & Autonomous Bot Prompt Transformation Engine
+ * Optimizes prompts across 18 distinct profiles tailored to:
+ * - 8 Frontier Intelligence Models (Claude 3.7/3.5, o3/o1, GPT-4o/4.5, Gemini 2.0, DeepSeek R1, Grok 3, Llama 3.3, Qwen 2.5 Coder)
+ * - 7 Autonomous Coding Bots (Cursor Composer, Windsurf Cascade, Claude Code CLI, Copilot Edits, Aider, Devin, Cline / Roo Code)
+ * - Universal Precision, Adversarial Red-Teaming, and Executive Conversion
  */
 
 import { KnowledgeBase, DomainRule } from "./knowledge_base";
@@ -13,6 +14,17 @@ export type EnhancementProfile =
   | "openai_o"
   | "gpt4o_schema"
   | "gemini_context"
+  | "deepseek_r1"
+  | "grok_direct"
+  | "llama_system"
+  | "qwen_coder"
+  | "cursor_composer"
+  | "windsurf_cascade"
+  | "claude_code"
+  | "copilot_edits"
+  | "aider_diff"
+  | "devin_fullstack"
+  | "cline_mcp"
   | "adversarial"
   | "executive";
 
@@ -24,8 +36,7 @@ export class PromptEnhancer {
     const domainRule = KnowledgeBase.getDomainEnrichment(cleanPrompt);
 
     switch (profile) {
-      case "precision":
-        return this.enhancePrecision(cleanPrompt, targetRuntime, domainRule);
+      // Frontier Foundation Models
       case "claude_xml":
         return this.enhanceClaudeXml(cleanPrompt, targetRuntime, domainRule);
       case "openai_o":
@@ -34,6 +45,34 @@ export class PromptEnhancer {
         return this.enhanceGpt4oSchema(cleanPrompt, targetRuntime, domainRule);
       case "gemini_context":
         return this.enhanceGeminiContext(cleanPrompt, targetRuntime, domainRule);
+      case "deepseek_r1":
+        return this.enhanceDeepSeekR1(cleanPrompt, targetRuntime, domainRule);
+      case "grok_direct":
+        return this.enhanceGrokDirect(cleanPrompt, targetRuntime, domainRule);
+      case "llama_system":
+        return this.enhanceLlamaSystem(cleanPrompt, targetRuntime, domainRule);
+      case "qwen_coder":
+        return this.enhanceQwenCoder(cleanPrompt, targetRuntime, domainRule);
+
+      // Autonomous Coding Bots & Agents
+      case "cursor_composer":
+        return this.enhanceCursorComposer(cleanPrompt, targetRuntime, domainRule);
+      case "windsurf_cascade":
+        return this.enhanceWindsurfCascade(cleanPrompt, targetRuntime, domainRule);
+      case "claude_code":
+        return this.enhanceClaudeCode(cleanPrompt, targetRuntime, domainRule);
+      case "copilot_edits":
+        return this.enhanceCopilotEdits(cleanPrompt, targetRuntime, domainRule);
+      case "aider_diff":
+        return this.enhanceAiderDiff(cleanPrompt, targetRuntime, domainRule);
+      case "devin_fullstack":
+        return this.enhanceDevinFullstack(cleanPrompt, targetRuntime, domainRule);
+      case "cline_mcp":
+        return this.enhanceClineMcp(cleanPrompt, targetRuntime, domainRule);
+
+      // Specialized
+      case "precision":
+        return this.enhancePrecision(cleanPrompt, targetRuntime, domainRule);
       case "adversarial":
         return this.enhanceAdversarial(cleanPrompt, targetRuntime, domainRule);
       case "executive":
@@ -51,7 +90,7 @@ export class PromptEnhancer {
       .trim();
   }
 
-  // 1. Universal Technical Precision
+  // 1. Universal Precision
   private static enhancePrecision(prompt: string, targetRuntime: string, domainRule: DomainRule | null): string {
     const core = this.stripFiller(prompt);
     const domainConstraints = domainRule
@@ -82,7 +121,7 @@ ${outputFormat}
 </output_format>`;
   }
 
-  // 2. Anthropic Claude 3.5 Sonnet / Opus XML Architecture
+  // 2. Anthropic Claude 3.7 / 3.5 Sonnet XML
   private static enhanceClaudeXml(prompt: string, targetRuntime: string, domainRule: DomainRule | null): string {
     const core = this.stripFiller(prompt);
     return `<system_role>
@@ -112,9 +151,8 @@ ${domainRule ? domainRule.recommendedOutputFormat : "Deliver direct executable s
 </output_specification>`;
   }
 
-  // 3. OpenAI o1 / o3-mini & DeepSeek R1 Autonomous Problem Specification
+  // 3. OpenAI o3 / o3-mini / o1 Autonomous Problem Spec
   private static enhanceOpenAiReasoning(prompt: string, targetRuntime: string, domainRule: DomainRule | null): string {
-    // Strip micromanaging "think step by step" to free up autonomous test-time compute
     const core = prompt
       .replace(/\b(think step by step|walk through step by step|let's think step by step|explain your reasoning step by step)\b/gi, "")
       .replace(/\s+/g, " ")
@@ -160,7 +198,7 @@ export function hashPayload(data: string): string {
 \`\`\``;
   }
 
-  // 5. Google Gemini 2.0 Flash / 1.5 Pro Context Anchoring
+  // 5. Google Gemini 2.0 Flash / Pro Context Anchoring
   private static enhanceGeminiContext(prompt: string, targetRuntime: string, domainRule: DomainRule | null): string {
     const core = this.stripFiller(prompt);
     return `[SYSTEM INSTRUCTION: FRONTIER GEMINI RUNTIME]
@@ -168,7 +206,7 @@ You are operating within ${targetRuntime}. You possess multi-modal context under
 ${domainRule ? `Domain Context: ${domainRule.domain}` : ""}
 
 ============================= BEGIN REFERENCE CONTEXT =============================
-Environment: Production IDE (${targetRuntime})
+Environment: Production Workspace (${targetRuntime})
 Knowledge Rules: ${domainRule ? domainRule.injectedConstraints.join("; ") : "Production standard compliance"}
 ============================== END REFERENCE CONTEXT ==============================
 
@@ -181,7 +219,195 @@ ${core}
 - Avoid repetitive disclaimers or speculative non-answers.`;
   }
 
-  // 6. Adversarial / RLHF Red-Teaming
+  // 6. DeepSeek R1 / V3 Algorithmic Invariants & Verification
+  private static enhanceDeepSeekR1(prompt: string, targetRuntime: string, domainRule: DomainRule | null): string {
+    const core = prompt
+      .replace(/\b(think step by step|walk through step by step|let's think step by step)\b/gi, "")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    return `### Mathematical & Algorithmic Contract
+Target Runtime: ${targetRuntime}
+${domainRule ? `Domain Specialization: ${domainRule.domain}` : ""}
+
+### Formal Problem Statement
+${core}
+
+### Invariant Equations & Safety Bounds
+1. Input preconditions: All parameters must be strictly typed, validated at boundary, and sanitised against degenerate/null inputs.
+2. Computational invariants: Guarantee termination, deterministic memory allocation, and idempotent execution.
+3. State transitions: Maintain consistent state across asynchronous concurrency and unexpected exceptions.
+
+### Verification Harness
+Deliver full runnable code followed by an explicit test harness verifying:
+- Happy path baseline execution
+- Extreme boundary condition (minimum, maximum, empty set)
+- Adversarial fault injection and recovery`;
+  }
+
+  // 7. xAI Grok 3 Technical Direct & High Signal
+  private static enhanceGrokDirect(prompt: string, targetRuntime: string, domainRule: DomainRule | null): string {
+    const core = this.stripFiller(prompt);
+    return `### MISSION DIRECTIVE (ZERO FLUFF)
+Environment: ${targetRuntime}
+Command: ${core}
+
+### EMPIRICAL EXECUTION RULES
+- Deliver direct, unhedged technical solutions backed by empirical evidence and ground truth.
+- Zero corporate boilerplate, safety disclaimers, or introductory fluff.
+- If existing code or assumptions are flawed, state the exact flaw bluntly and provide the working replacement.
+${domainRule ? `- Anchor in domain truth: ${domainRule.injectedConstraints.join("; ")}` : ""}
+
+### DELIVERABLE
+Production-ready code and exact execution verification steps.`;
+  }
+
+  // 8. Meta Llama 3.3 70B Steered System Framework
+  private static enhanceLlamaSystem(prompt: string, targetRuntime: string, domainRule: DomainRule | null): string {
+    const core = this.stripFiller(prompt);
+    return `<|begin_of_text|><|start_header_id|>system<|end_header_id|>
+You are an expert autonomous software engineer operating inside ${targetRuntime}.
+You strictly adhere to operational constraints and output concise, well-structured, bug-free implementations.
+${domainRule ? `Domain Context: ${domainRule.domain}. Rules: ${domainRule.injectedConstraints.join(", ")}` : ""}
+<|eot_id|><|start_header_id|>user<|end_header_id|>
+Execute the following task with high precision:
+
+${core}
+
+Requirements:
+1. Provide the complete implementation with zero placeholders or omissions.
+2. Include type definitions, error boundaries, and defensive checks.
+3. Deliver a brief validation snippet confirming functionality.
+<|eot_id|><|start_header_id|>assistant<|end_header_id|>`;
+  }
+
+  // 9. Alibaba Qwen 2.5 Coder Clean Synthesis
+  private static enhanceQwenCoder(prompt: string, targetRuntime: string, domainRule: DomainRule | null): string {
+    const core = this.stripFiller(prompt);
+    return `// Target: ${targetRuntime}
+// Domain: ${domainRule ? domainRule.domain : "General Engineering"}
+// Instruction: Implement the following specification in production-ready code with complete imports, strict types, and unit tests.
+
+/* SPECIFICATION
+${core}
+*/
+
+// REQUIREMENTS
+// 1. Drop-in replacement with zero omitted logic (no '// TODO' or 'implement here').
+// 2. Strict type annotations and robust error propagation.
+// 3. Include a runnable test suite asserting all boundary invariants.`;
+  }
+
+  // 10. Cursor Composer Multi-File Edit Spec
+  private static enhanceCursorComposer(prompt: string, targetRuntime: string, domainRule: DomainRule | null): string {
+    const core = this.stripFiller(prompt);
+    return `### Cursor Composer Multi-File Task
+Target Workspace: ${targetRuntime}
+
+### Request Summary
+${core}
+
+### Modification Guidelines
+- Edit only the targeted files and symbols required for this task.
+- Preserve existing project style, comments, and conventions.
+- Format all code changes as full, drop-in replacement blocks or unambiguous edits.
+${domainRule ? `- Enforce domain constraints: ${domainRule.injectedConstraints.join("; ")}` : ""}
+
+### Verification Step
+Run local workspace tests or compilation checks to verify zero regression.`;
+  }
+
+  // 11. Windsurf Cascade Flow & Tool Directives
+  private static enhanceWindsurfCascade(prompt: string, targetRuntime: string, domainRule: DomainRule | null): string {
+    const core = this.stripFiller(prompt);
+    return `### Cascade Flow Task Plan
+Context: Operating within Windsurf IDE (${targetRuntime})
+
+### Task Objective
+${core}
+
+### Cascade Execution Sequence
+Step 1: Inspect relevant files and dependency manifests in the workspace.
+Step 2: Implement the requested functionality with atomic, verified file edits.
+Step 3: Execute workspace terminal checks to confirm zero lint, type, or runtime errors.
+
+### Constraints
+- Zero conversational filler; proceed directly with tool actions.
+- Document any modified exported interfaces cleanly.`;
+  }
+
+  // 12. Claude Code CLI Terminal Pipeline & Test Harness
+  private static enhanceClaudeCode(prompt: string, targetRuntime: string, domainRule: DomainRule | null): string {
+    const core = this.stripFiller(prompt);
+    return `Task for Claude Code CLI:
+${core}
+
+Operational Directives:
+- Inspect the codebase using ripgrep and file read tools before modifying files.
+- Apply surgical edits to files using standard diff-compatible modifications.
+- Run the project test suite (e.g. npm test, cargo test, pytest) to verify changes pass cleanly.
+- Keep terminal output concise and commit-ready.`;
+  }
+
+  // 13. GitHub Copilot Edits Scoped Patch
+  private static enhanceCopilotEdits(prompt: string, targetRuntime: string, domainRule: DomainRule | null): string {
+    const core = this.stripFiller(prompt);
+    return `Scope: Tightly focused inline edit in active editor context (${targetRuntime})
+
+Task:
+${core}
+
+Guidelines:
+- Modify only the required functions/lines in the active files.
+- Do NOT refactor or reformat unrelated code.
+- Match existing naming, indentation, and docstring conventions.`;
+  }
+
+  // 14. Aider Git Pair Programming & Commit Spec
+  private static enhanceAiderDiff(prompt: string, targetRuntime: string, domainRule: DomainRule | null): string {
+    const core = this.stripFiller(prompt);
+    return `Aider Session Directive:
+${core}
+
+Rules for Git Commit:
+1. Make complete, working changes to the relevant files.
+2. Run test verification command before completing.
+3. Formulate a concise, imperative Git commit message summarizing the change (e.g. 'feat: implement ...' or 'fix: resolve ...').`;
+  }
+
+  // 15. Devin Autonomous Full-Lifecycle Spec
+  private static enhanceDevinFullstack(prompt: string, targetRuntime: string, domainRule: DomainRule | null): string {
+    const core = this.stripFiller(prompt);
+    return `### Devin Autonomous Engineering Specification
+Project Environment: ${targetRuntime}
+
+### Milestone 1: Requirement Analysis & Investigation
+${core}
+
+### Milestone 2: Implementation & File Edits
+- Implement all required changes across backend, frontend, and configuration files.
+- Ensure all environment variables and secrets are handled securely without hardcoding.
+
+### Milestone 3: End-to-End Verification
+- Launch local test server or test suite in shell.
+- Verify browser or API response contracts match expectations.
+- Document any setup instructions in README if dependencies were added.`;
+  }
+
+  // 16. Cline / Roo Code MCP Tool Plan
+  private static enhanceClineMcp(prompt: string, targetRuntime: string, domainRule: DomainRule | null): string {
+    const core = this.stripFiller(prompt);
+    return `Cline Agent MCP Execution Directive:
+Task: ${core}
+
+MCP Tool Execution Protocol:
+1. Use file read tools to inspect exact line numbers before editing.
+2. Apply atomic write_to_file or apply_diff tool calls.
+3. Use execute_command to run build/lint checks after edits.
+4. Stop and report when all acceptance criteria are verified.`;
+  }
+
+  // 17. Adversarial / RLHF Red-Teaming
   private static enhanceAdversarial(prompt: string, targetRuntime: string, domainRule: DomainRule | null): string {
     const checklist = domainRule
       ? domainRule.reasoningChecklist.map((c, i) => `${i + 1}. ${c}`).join("\n")
@@ -202,7 +428,7 @@ ${prompt}
 
 <adversarial_rubric>
 1. Constraint Adherence: Verify that every negative constraint, formatting instruction, and length requirement is strictly followed without drift.
-2. Fact-Checking & Semantic Grounding: Expose any historical, mathematical, or accounting hallucinations (e.g. inverted signs, misattributed entities, broken references).
+2. Fact-Checking & Semantic Grounding: Expose any historical, mathematical, or accounting hallucinations.
 3. Domain-Specific Verification Checklist:
 ${checklist}
 4. Failure Classification: If a failure is elicited, classify the root cause (Instruction Neglect, Parametric Hallucination, Semantic Homonym Trap, or Logic Inversion).
@@ -213,7 +439,7 @@ Provide an unsparing, analytical assessment backed by explicit mathematical or t
 </required_output>`;
   }
 
-  // 7. Executive & Commercial High-Yield Conversion
+  // 18. Executive & Commercial High-Yield Conversion
   private static enhanceExecutive(prompt: string, domainRule: DomainRule | null): string {
     return `### Context & Strategic Objective
 ${prompt}

@@ -197,11 +197,11 @@ export function activate(context: vscode.ExtensionContext) {
     if (!isLicensed) {
       if (trialCount <= 0) {
         const choice = await vscode.window.showInformationMessage(
-          "PromptSmith: Free trial completed. Unlock lifetime Pro access for $0.99?",
-          "Unlock for $0.99",
+          "PromptSmith: Free trial completed. Unlock Pro access for $0.99 / week?",
+          "Subscribe for $0.99/wk",
           "Enter Passkey"
         );
-        if (choice === "Unlock for $0.99") {
+        if (choice === "Subscribe for $0.99/wk") {
           vscode.env.openExternal(vscode.Uri.parse("https://bartholomew.info/checkout/promptsmith?ref=vscode"));
         } else if (choice === "Enter Passkey") {
           vscode.commands.executeCommand("promptsmith.unlockLicense");
@@ -232,7 +232,7 @@ export function activate(context: vscode.ExtensionContext) {
   // Command: Unlock License Passkey ($0.99)
   const unlockCmd = vscode.commands.registerCommand("promptsmith.unlockLicense", async () => {
     const key = await vscode.window.showInputBox({
-      prompt: "Enter your PromptSmith $0.99 Lifetime Passkey or Stripe Session ID",
+      prompt: "Enter your PromptSmith Pro Passkey ($0.99/wk) or Stripe Session ID",
       placeHolder: "PSMITH-PRO-XXXX-XXXX"
     });
 

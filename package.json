@@ -1,8 +1,8 @@
 {
   "name": "promptsmith-ai",
   "displayName": "PromptSmith AI - Prompt Companion & Optimizer",
-  "description": "A simple prompt companion that rewrites instructions for Claude, ChatGPT, o1, and Gemini. Trims wasted words, tests model compatibility, and includes a draggable screen assistant.",
-  "version": "1.7.2",
+  "description": "Universal prompt companion and benchmark engine across Claude 3.7/3.5, o3/o1, GPT-4o, Gemini 2.0, DeepSeek R1, Grok 3, Cursor Composer, Windsurf, Claude Code, and Copilot.",
+  "version": "1.7.3",
   "publisher": "bartholomew",
   "icon": "icon.png",
   "license": "MIT",
@@ -37,6 +37,12 @@
     "copilot",
     "gpt-4o",
     "gemini",
+    "deepseek",
+    "grok",
+    "o3-mini",
+    "aider",
+    "devin",
+    "cline",
     "ai",
     "llm",
     "rlhf",
@@ -60,7 +66,7 @@
       },
       {
         "command": "promptsmith.unlockLicense",
-        "title": "PromptSmith: Activate $0.99 Lifetime Passkey",
+        "title": "PromptSmith: Activate Pro Passkey ($0.99/wk)",
         "icon": "$(key)"
       }
     ],
