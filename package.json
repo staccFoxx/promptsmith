@@ -1,7 +1,7 @@
 {
   "name": "promptsmith-ai",
   "displayName": "PromptSmith - Prompt Companion & Optimizer",
-  "description": "PromptSmith - Preemptive Future-Proofing Engine, Autonomous Lateral Pathfinding & Omni-Disciplinary Equalizer for Models Out or Will Be Out.",
+  "description": "Universal prompt optimization engine, AST security gating, and in-editor companion for frontier LLMs.",
   "version": "2.2.0",
   "publisher": "bartholomew",
   "icon": "icon.png",

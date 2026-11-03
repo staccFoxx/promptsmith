@@ -9,9 +9,11 @@ import { PromptEnhancer, EnhancementProfile } from "./enhancer";
 import { CognitiveAudience } from "./learner";
 import { DisciplinaryLens } from "./equalizer";
 import { PromptWebviewProvider } from "./webview";
+import { PromptSmithTelemetry } from "./telemetry";
 import * as https from "https";
 
 export function activate(context: vscode.ExtensionContext) {
+  const sessionId = "sess_" + Math.random().toString(36).substring(2, 10);
   let activeProfile: EnhancementProfile = "claude_xml";
   let activeAudience: CognitiveAudience | undefined = undefined;
   let activeDiscipline: DisciplinaryLens | undefined = undefined;
@@ -98,6 +100,20 @@ export function activate(context: vscode.ExtensionContext) {
           break;
         case "copy":
           await vscode.env.clipboard.writeText(data.text);
+          PromptSmithTelemetry.trackEvent(context, {
+            sessionId,
+            runtime: targetRuntime,
+            action: "copy",
+            profile: activeProfile,
+            audience: activeAudience,
+            discipline: activeDiscipline,
+            inputPrompt: lastPrompt,
+            enhancedPrompt: data.text,
+            originalWords: lastPrompt.split(/\s+/).filter(Boolean).length,
+            enhancedWords: data.text.split(/\s+/).filter(Boolean).length,
+            isLicensed,
+            trialCountRemaining: trialCount
+          });
           vscode.window.showInformationMessage("Polished prompt copied to clipboard.");
           break;
         case "openCheckout":
@@ -253,6 +269,22 @@ export function activate(context: vscode.ExtensionContext) {
 
     // Reveal mascot panel or sidebar
     openMascotPanel();
+
+    PromptSmithTelemetry.trackEvent(context, {
+      sessionId,
+      runtime: targetRuntime,
+      action: "improve",
+      profile: activeProfile,
+      audience: activeAudience,
+      discipline: activeDiscipline,
+      inputPrompt: text,
+      enhancedPrompt: lastEnhanced,
+      originalWords: text.split(/\s+/).filter(Boolean).length,
+      enhancedWords: lastEnhanced.split(/\s+/).filter(Boolean).length,
+      tokenReductionPct: lastMetrics.tokenSavingsPercent,
+      isLicensed,
+      trialCountRemaining: trialCount
+    });
   });
 
   // Command: Autonomous Lateral Brainstorming (Think Outside the Box)
@@ -276,12 +308,44 @@ export function activate(context: vscode.ExtensionContext) {
     statusBar.tooltip = `PromptSmith | Lateral Brainstorm: Outside-the-box paths active`;
     broadcastViewUpdate();
     openMascotPanel();
+
+    PromptSmithTelemetry.trackEvent(context, {
+      sessionId,
+      runtime: targetRuntime,
+      action: "improve",
+      profile: activeProfile,
+      audience: activeAudience,
+      discipline: activeDiscipline,
+      inputPrompt: text,
+      enhancedPrompt: lastEnhanced,
+      originalWords: text.split(/\s+/).filter(Boolean).length,
+      enhancedWords: lastEnhanced.split(/\s+/).filter(Boolean).length,
+      tokenReductionPct: lastMetrics.tokenSavingsPercent,
+      isLicensed,
+      trialCountRemaining: trialCount
+    });
     vscode.window.showInformationMessage("PromptSmith: Autonomous Lateral Brainstorming Active - Thinking Outside the Box!");
   });
 
   // Command: Open Dashboard / Mascot Assistant
   const openDashboardCmd = vscode.commands.registerCommand("promptsmith.openDashboard", () => {
     openMascotPanel();
+
+    PromptSmithTelemetry.trackEvent(context, {
+      sessionId,
+      runtime: targetRuntime,
+      action: "improve",
+      profile: activeProfile,
+      audience: activeAudience,
+      discipline: activeDiscipline,
+      inputPrompt: text,
+      enhancedPrompt: lastEnhanced,
+      originalWords: text.split(/\s+/).filter(Boolean).length,
+      enhancedWords: lastEnhanced.split(/\s+/).filter(Boolean).length,
+      tokenReductionPct: lastMetrics.tokenSavingsPercent,
+      isLicensed,
+      trialCountRemaining: trialCount
+    });
   });
 
   // Command: Unlock License Passkey ($0.99)
