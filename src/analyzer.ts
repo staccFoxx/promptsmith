@@ -1,5 +1,5 @@
 /**
- * PromptSmith AI - Analytical Prompt Intelligence Engine
+ * PromptSmith - Analytical Prompt Intelligence Engine
  * Evaluates prompt quality, constraint density, token efficiency, and multi-model benchmarking.
  */
 

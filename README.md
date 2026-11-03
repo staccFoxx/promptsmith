@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/staccFoxx/bartholomew/main/site/assets/promptsmith_mascot.png" width="140" height="140" alt="PromptSmith AI Mascot" />
+  <img src="https://raw.githubusercontent.com/staccFoxx/bartholomew/main/site/assets/promptsmith_mascot.png" width="140" height="140" alt="PromptSmith Mascot" />
 </p>
 
-<h1 align="center">PromptSmith AI</h1>
+<h1 align="center">PromptSmith</h1>
 
 <p align="center">
   <strong>Universal Prompt Optimization Engine, Multi-Model Benchmark Suite, and Draggable Screen Companion for VS Code, Cursor, Windsurf, and Claude Code.</strong>
@@ -19,7 +19,7 @@
 
 ## Overview
 
-PromptSmith AI is an intelligent prompt structuring engine and in-editor companion designed to maximize the performance, reasoning accuracy, and token efficiency of frontier AI models.
+PromptSmith is an intelligent prompt structuring engine and in-editor companion designed to maximize the performance, reasoning accuracy, and token efficiency of frontier AI models.
 
 When developers write raw prompts in natural conversational English, models spend high-priority self-attention capacity deciphering conversational filler rather than focusing on core algorithmic logic. PromptSmith decomposes everyday instructions into mathematically rigorous, high-density prompts tailored to the specific attention architecture of **Anthropic Claude 3.5 Sonnet**, **OpenAI o1 / o3**, **ChatGPT-4o**, **Google Gemini 2.0 Flash**, and **DeepSeek R1**.
 
@@ -134,6 +134,6 @@ This ensures downstream subagents receive unambiguous, structured instructions w
 
 ## License & Passkey Unlock
 
-PromptSmith AI is free for standard prompt optimization. For unlimited high-concurrency multi-model benchmarking and autonomous M2M API clearance, lifetime access is available for a weekly subscription of **$0.99 / week** via Stripe at [bartholomew.info/checkout/promptsmith](https://bartholomew.info/checkout/promptsmith).
+PromptSmith is free for standard prompt optimization. For unlimited high-concurrency multi-model benchmarking and autonomous M2M API clearance, lifetime access is available for a weekly subscription of **$0.99 / week** via Stripe at [bartholomew.info/checkout/promptsmith](https://bartholomew.info/checkout/promptsmith).
 
 Licensed under the Apache 2.0 License. Maintained by [Bartholomew Technologies](https://bartholomew.info).

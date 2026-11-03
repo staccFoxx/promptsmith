@@ -1,5 +1,5 @@
 /**
- * PromptSmith AI - Extension Entry Point
+ * PromptSmith - Extension Entry Point
  * Draggable Mascot Companion, Multi-Model Prompt Optimizer, & $0.99 Frictionless Pro Passkey.
  */
 
@@ -25,7 +25,7 @@ export function activate(context: vscode.ExtensionContext) {
   const statusBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
   statusBar.command = "promptsmith.openDashboard";
   statusBar.text = "$(sparkle)";
-  statusBar.tooltip = "PromptSmith AI | Press Alt+P to polish selected prompt";
+  statusBar.tooltip = "PromptSmith | Press Alt+P to polish selected prompt";
   statusBar.show();
   context.subscriptions.push(statusBar);
 
@@ -217,7 +217,7 @@ export function activate(context: vscode.ExtensionContext) {
     lastEnhanced = PromptEnhancer.enhance(text, activeProfile, targetRuntime);
 
     statusBar.text = `$(sparkle)`;
-    statusBar.tooltip = `PromptSmith AI | Score: ${lastMetrics.iqScore}/100 (-${lastMetrics.tokenSavingsPercent}% words)`;
+    statusBar.tooltip = `PromptSmith | Score: ${lastMetrics.iqScore}/100 (-${lastMetrics.tokenSavingsPercent}% words)`;
     broadcastViewUpdate();
 
     // Reveal mascot panel or sidebar

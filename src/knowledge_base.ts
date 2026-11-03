@@ -1,5 +1,5 @@
 /**
- * PromptSmith AI - Universal Domain Intelligence Engine
+ * PromptSmith - Universal Domain Intelligence Engine
  * Comprehensive knowledge corpus spanning 16 foundational domains with dynamic
  * first-principles invariant synthesis for any arbitrary subject matter or context.
  */

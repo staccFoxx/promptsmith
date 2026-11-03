@@ -1,5 +1,5 @@
 /**
- * PromptSmith AI - Precision Multi-Model & Autonomous Bot Prompt Transformation Engine
+ * PromptSmith - Precision Multi-Model & Autonomous Bot Prompt Transformation Engine
  * Optimizes prompts across 18 distinct profiles tailored to:
  * - 8 Frontier Intelligence Models (Claude 3.7/3.5, o3/o1, GPT-4o/4.5, Gemini 2.0, DeepSeek R1, Grok 3, Llama 3.3, Qwen 2.5 Coder)
  * - 7 Autonomous Coding Bots (Cursor Composer, Windsurf Cascade, Claude Code CLI, Copilot Edits, Aider, Devin, Cline / Roo Code)

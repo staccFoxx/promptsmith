@@ -1,5 +1,5 @@
 /**
- * PromptSmith AI - Bulletproof Standalone Bundler
+ * PromptSmith - Bulletproof Standalone Bundler
  * Automatically discovers local or cached esbuild binary, bundles TypeScript into CJS,
  * and supports production minification and --watch mode with zero configuration.
  */

@@ -1,5 +1,5 @@
 /**
- * PromptSmith AI - Frontier Model & Autonomous Coding Bot Benchmark Engine
+ * PromptSmith - Frontier Model & Autonomous Coding Bot Benchmark Engine
  * Evaluates, scores, and benchmarks prompts across:
  * - 8 Frontier Intelligence Models: Claude 3.7/3.5, OpenAI o3/o1, GPT-4o/4.5, Gemini 2.0, DeepSeek R1, Grok 3, Llama 3.3, Qwen 2.5 Coder
  * - 7 Autonomous Coding Bots: Cursor Composer, Windsurf Cascade, Claude Code CLI, GitHub Copilot Edits, Aider, Devin, Cline / Roo Code
