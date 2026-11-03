@@ -1,10 +1,12 @@
 /**
- * PromptSmith - Analytical Prompt Intelligence Engine
- * Evaluates prompt quality, constraint density, token efficiency, and multi-model benchmarking.
+ * PromptSmith - Analytical Prompt Intelligence & Cognitive Analytics Engine
+ * Evaluates prompt quality, constraint density, token efficiency, multi-model benchmarking,
+ * and cognitive learning pattern analytics (CLT, ZPD, Bloom's Taxonomy, Flesch-Kincaid).
  */
 
 import { KnowledgeBase } from "./knowledge_base";
-import { ModelBenchmarkEngine, ModelBenchmarkResult } from "./benchmarks";
+import { ModelBenchmarkEngine, BenchmarkTarget } from "./benchmarks";
+import { CognitivePatternEngine, CognitiveAnalysis } from "./learner";
 
 export interface PromptMetrics {
   iqScore: number;
@@ -22,7 +24,8 @@ export interface PromptMetrics {
   strengths: string[];
   weaknesses: string[];
   missingElements: string[];
-  benchmarks: ModelBenchmarkResult[];
+  benchmarks: BenchmarkTarget[];
+  cognitive: CognitiveAnalysis;
 }
 
 export class PromptAnalyzer {
@@ -141,6 +144,10 @@ export class PromptAnalyzer {
     if (efficiencyScore < 14) weaknesses.push(`Contains ${fillerCount} conversational filler phrases`);
     else strengths.push("High token-to-signal density");
 
+    // Cognitive Pattern Recognition
+    const cognitive = CognitivePatternEngine.analyzeCognitivePattern(text, detectedDomain);
+    strengths.push(`Cognitive calibration: ${cognitive.audienceLabel} (Grade ${cognitive.fleschKincaidGrade})`);
+
     // Multi-Model Benchmarks
     const benchmarks = ModelBenchmarkEngine.benchmarkPrompt(text);
 
@@ -160,7 +167,8 @@ export class PromptAnalyzer {
       strengths,
       weaknesses,
       missingElements,
-      benchmarks
+      benchmarks,
+      cognitive
     };
   }
 
@@ -181,7 +189,8 @@ export class PromptAnalyzer {
       strengths: [],
       weaknesses: ["Prompt is empty"],
       missingElements: ["All core components"],
-      benchmarks: ModelBenchmarkEngine.benchmarkPrompt("")
+      benchmarks: ModelBenchmarkEngine.benchmarkPrompt(""),
+      cognitive: CognitivePatternEngine.analyzeCognitivePattern("")
     };
   }
 }
