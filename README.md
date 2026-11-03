@@ -11,7 +11,7 @@
 <p align="center">
   <a href="https://open-vsx.org/extension/bartholomew/promptsmith-ai"><img src="https://img.shields.io/badge/Open--VSX-v1.7.0-blue.svg?style=flat-square" alt="Open-VSX" /></a>
   <a href="https://bartholomew.info/promptsmith"><img src="https://img.shields.io/badge/Web_Studio-Live-gold.svg?style=flat-square" alt="Web Studio" /></a>
-  <a href="https://bartholomew.info/checkout/promptsmith"><img src="https://img.shields.io/badge/Passkey-$0.99_Lifetime-success.svg?style=flat-square" alt="Stripe Passkey" /></a>
+  <a href="https://bartholomew.info/checkout/promptsmith"><img src="https://img.shields.io/badge/Passkey-$0.99/week-success.svg?style=flat-square" alt="Stripe Passkey" /></a>
   <a href="LICENSE.md"><img src="https://img.shields.io/badge/License-Apache--2.0-green.svg?style=flat-square" alt="License" /></a>
 </p>
 
@@ -134,6 +134,6 @@ This ensures downstream subagents receive unambiguous, structured instructions w
 
 ## License & Passkey Unlock
 
-PromptSmith AI is free for standard prompt optimization. For unlimited high-concurrency multi-model benchmarking and autonomous M2M API clearance, lifetime access is available for a one-time fee of **$0.99** via Stripe at [bartholomew.info/checkout/promptsmith](https://bartholomew.info/checkout/promptsmith).
+PromptSmith AI is free for standard prompt optimization. For unlimited high-concurrency multi-model benchmarking and autonomous M2M API clearance, lifetime access is available for a weekly subscription of **$0.99 / week** via Stripe at [bartholomew.info/checkout/promptsmith](https://bartholomew.info/checkout/promptsmith).
 
 Licensed under the Apache 2.0 License. Maintained by [Bartholomew Technologies](https://bartholomew.info).

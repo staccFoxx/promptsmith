@@ -1,7 +1,7 @@
 /**
  * PromptSmith AI - Draggable Isolated Mascot Companion & Universal Prompt Studio
  * Pure character cutout with zero background, draggable anywhere on screen,
- * powered by universal domain intelligence, zero emojis, and $0.99 passkey unlock.
+ * powered by universal domain intelligence, zero emojis, and $0.99/week passkey unlock.
  */
 
 import { PromptMetrics } from "./analyzer";
