@@ -1,7 +1,7 @@
 /**
- * PromptSmith - Preemptive Future-Proofing Engine
+ * PromptSmith - Frontier Model Optimization & Reasoning Guard Engine
  * 
- * Anticipates and pre-empts failure modes in models that "are out or will be out":
+ * Maximizes performance, reasoning accuracy, and token efficiency for frontier AI models:
  * 1. Test-Time Compute & Deep Reasoning Models (o3, Claude 4, Gemini 3, Qwen 3):
  *    - Eliminates recursive search loops, speculative branch explosion, and over-thinking paralysis.
  *    - Injects Deterministic Search Pruning Operators and Definitive Termination Criteria.

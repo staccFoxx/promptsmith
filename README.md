@@ -5,7 +5,7 @@
 <h1 align="center">PromptSmith</h1>
 
 <p align="center">
-  <strong>Universal Prompt Optimization Engine, Multi-Model Benchmark Suite, and Draggable Screen Companion for VS Code, Cursor, Windsurf, and Claude Code.</strong>
+  <strong>Maximizes performance, reasoning accuracy, and token efficiency for frontier AI models across VS Code, Cursor, Windsurf, and Claude Code.</strong>
 </p>
 
 <p align="center">
