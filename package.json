@@ -2,7 +2,7 @@
   "name": "promptsmith-ai",
   "displayName": "PromptSmith AI - Prompt Companion & Optimizer",
   "description": "A simple prompt companion that rewrites instructions for Claude, ChatGPT, o1, and Gemini. Trims wasted words, tests model compatibility, and includes a draggable screen assistant.",
-  "version": "1.7.0",
+  "version": "1.7.1",
   "publisher": "bartholomew",
   "icon": "icon.png",
   "license": "MIT",
