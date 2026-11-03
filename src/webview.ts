@@ -13,6 +13,7 @@ import { PromptMetrics } from "./analyzer";
 import { EnhancementProfile } from "./enhancer";
 import { ModelBenchmarkEngine, BenchmarkTarget } from "./benchmarks";
 import { CognitiveAudience } from "./learner";
+import { DisciplinaryLens, OmniEqualizerEngine } from "./equalizer";
 
 export class PromptWebviewProvider {
   public static getHtml(
@@ -22,7 +23,8 @@ export class PromptWebviewProvider {
     activeProfile: EnhancementProfile,
     isLicensed: boolean,
     remainingTrial: number,
-    activeAudience?: CognitiveAudience
+    activeAudience?: CognitiveAudience,
+    activeDiscipline?: DisciplinaryLens
   ): string {
     const safeOriginal = (originalPrompt || "Select text in your editor and press Alt+P to improve it.")
       .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -33,6 +35,8 @@ export class PromptWebviewProvider {
 
     const cognitive = metrics.cognitive;
     const currentAudience = activeAudience || cognitive.audience;
+    const currentDiscipline = activeDiscipline || metrics.discipline;
+    const equalizerProf = OmniEqualizerEngine.PROFILES[currentDiscipline] || metrics.equalizer;
 
     // Friendly mascot greeting tailored to detected cognitive level
     let mascotMessage = "I polished your prompt to get direct, accurate answers from your active AI model.";
@@ -196,6 +200,58 @@ export class PromptWebviewProvider {
       gap: 8px;
       opacity: 0.75;
       font-size: 9.5px;
+    }
+
+    
+    /* Omni-Disciplinary Equalizer */
+    .equalizer-box {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 6px 8px;
+      margin-bottom: 8px;
+      font-size: 10px;
+    }
+    .equalizer-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 3px;
+    }
+    .equalizer-badge {
+      font-weight: 700;
+      background: rgba(255, 255, 255, 0.08);
+      padding: 1px 5px;
+      border-radius: 3px;
+    }
+    .discipline-pills {
+      display: flex;
+      gap: 3px;
+      margin-top: 4px;
+      overflow-x: auto;
+      padding-bottom: 2px;
+    }
+    .discipline-btn {
+      background: rgba(0, 0, 0, 0.25);
+      border: 1px solid var(--border);
+      color: var(--fg);
+      font-size: 9px;
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: 4px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s ease;
+    }
+    .discipline-btn:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: var(--accent);
+    }
+    .discipline-btn.active {
+      background: rgba(234, 179, 8, 0.18);
+      border-color: #eab308;
+      color: #fbbf24;
+      font-weight: 700;
     }
 
     /* Audience Switcher Pills */
@@ -502,6 +558,25 @@ export class PromptWebviewProvider {
         </div>
       </div>
 
+      
+      <!-- Omni-Disciplinary Equalizer (Level the Playing Field) -->
+      <div class="equalizer-box">
+        <div class="equalizer-top">
+          <span>Equalizer Lens: <b class="equalizer-badge" style="color:${equalizerProf.badgeColor};">${equalizerProf.title}</b></span>
+          <span style="opacity:0.75; font-size:9px; color:var(--success);">Cross-Pollination Active</span>
+        </div>
+        <div style="opacity:0.75; font-size:9px; margin-bottom:4px;">
+          ${equalizerProf.subtitle}
+        </div>
+        <div class="discipline-pills">
+          <button class="discipline-btn ${!activeDiscipline ? 'active' : ''}" onclick="setDiscipline('auto')" title="Auto-detect disciplinary focus">Auto</button>
+          <button class="discipline-btn ${activeDiscipline === 'architect' ? 'active' : ''}" onclick="setDiscipline('architect')" title="Systems & Cloud Architects - Concurrency, Invariants & High Availability">Systems Architect</button>
+          <button class="discipline-btn ${activeDiscipline === 'designer' ? 'active' : ''}" onclick="setDiscipline('designer')" title="UI/UX & Product Designers - Design Tokens, Spring Motion & WCAG AAA">Product & UI/UX Designer</button>
+          <button class="discipline-btn ${activeDiscipline === 'analyst' ? 'active' : ''}" onclick="setDiscipline('analyst')" title="Data & Intelligence Analysts - Queries, Statistics & Visual Contracts">Data & Intelligence</button>
+          <button class="discipline-btn ${activeDiscipline === 'creator' ? 'active' : ''}" onclick="setDiscipline('creator')" title="Everyday Creators, Students & Domain Specialists - Zero Technical Barrier">Everyday Creator (All Ages)</button>
+        </div>
+      </div>
+
       <!-- Category Switcher -->
       <div class="target-tabs">
         <button class="target-tab active" id="tab-models" onclick="switchCategory('models')">Frontier Models (8)</button>
@@ -614,6 +689,11 @@ export class PromptWebviewProvider {
         gridBots.style.display = "grid";
         gridModels.style.display = "none";
       }
+    }
+
+    
+    function setDiscipline(discipline) {
+      vscode.postMessage({ command: "changeDiscipline", discipline });
     }
 
     function setAudience(audience) {

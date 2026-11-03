@@ -7,6 +7,8 @@
  */
 
 import { KnowledgeBase, DomainRule } from "./knowledge_base";
+import { CognitivePatternEngine, CognitiveAnalysis, CognitiveAudience } from "./learner";
+import { OmniEqualizerEngine, DisciplinaryLens } from "./equalizer";
 
 export type EnhancementProfile =
   | "precision"
@@ -29,55 +31,100 @@ export type EnhancementProfile =
   | "executive";
 
 export class PromptEnhancer {
-  public static enhance(prompt: string, profile: EnhancementProfile = "precision", targetRuntime = "Cursor / Claude Code"): string {
+  public static enhance(
+    prompt: string,
+    profile: EnhancementProfile = "precision",
+    targetRuntime = "Cursor / Claude Code",
+    audienceOverride?: CognitiveAudience,
+    disciplineOverride?: DisciplinaryLens
+  ): string {
     const cleanPrompt = prompt.trim();
     if (!cleanPrompt) return "";
 
     const domainRule = KnowledgeBase.getDomainEnrichment(cleanPrompt);
+    const domainName = domainRule ? domainRule.domain : "General";
+    
+    // Cognitive Scaffolding Analysis
+    const cognitive = CognitivePatternEngine.analyzeCognitivePattern(cleanPrompt, domainName);
+    const activeAudience = audienceOverride || cognitive.audience;
+    const scaffoldingDirectives = this.getScaffoldingBlock(activeAudience);
 
+    // Omni-Disciplinary Equalizer Analysis
+    const activeLens = disciplineOverride || OmniEqualizerEngine.detectDisciplinaryLens(cleanPrompt);
+    const equalizerBlock = OmniEqualizerEngine.getEqualizerBlock(activeLens, true);
+
+    let compiled = "";
     switch (profile) {
       // Frontier Foundation Models
       case "claude_xml":
-        return this.enhanceClaudeXml(cleanPrompt, targetRuntime, domainRule);
+        compiled = this.enhanceClaudeXml(cleanPrompt, targetRuntime, domainRule); break;
       case "openai_o":
-        return this.enhanceOpenAiReasoning(cleanPrompt, targetRuntime, domainRule);
+        compiled = this.enhanceOpenAiReasoning(cleanPrompt, targetRuntime, domainRule); break;
       case "gpt4o_schema":
-        return this.enhanceGpt4oSchema(cleanPrompt, targetRuntime, domainRule);
+        compiled = this.enhanceGpt4oSchema(cleanPrompt, targetRuntime, domainRule); break;
       case "gemini_context":
-        return this.enhanceGeminiContext(cleanPrompt, targetRuntime, domainRule);
+        compiled = this.enhanceGeminiContext(cleanPrompt, targetRuntime, domainRule); break;
       case "deepseek_r1":
-        return this.enhanceDeepSeekR1(cleanPrompt, targetRuntime, domainRule);
+        compiled = this.enhanceDeepSeekR1(cleanPrompt, targetRuntime, domainRule); break;
       case "grok_direct":
-        return this.enhanceGrokDirect(cleanPrompt, targetRuntime, domainRule);
+        compiled = this.enhanceGrokDirect(cleanPrompt, targetRuntime, domainRule); break;
       case "llama_system":
-        return this.enhanceLlamaSystem(cleanPrompt, targetRuntime, domainRule);
+        compiled = this.enhanceLlamaSystem(cleanPrompt, targetRuntime, domainRule); break;
       case "qwen_coder":
-        return this.enhanceQwenCoder(cleanPrompt, targetRuntime, domainRule);
+        compiled = this.enhanceQwenCoder(cleanPrompt, targetRuntime, domainRule); break;
 
       // Autonomous Coding Bots & Agents
       case "cursor_composer":
-        return this.enhanceCursorComposer(cleanPrompt, targetRuntime, domainRule);
+        compiled = this.enhanceCursorComposer(cleanPrompt, targetRuntime, domainRule); break;
       case "windsurf_cascade":
-        return this.enhanceWindsurfCascade(cleanPrompt, targetRuntime, domainRule);
+        compiled = this.enhanceWindsurfCascade(cleanPrompt, targetRuntime, domainRule); break;
       case "claude_code":
-        return this.enhanceClaudeCode(cleanPrompt, targetRuntime, domainRule);
+        compiled = this.enhanceClaudeCode(cleanPrompt, targetRuntime, domainRule); break;
       case "copilot_edits":
-        return this.enhanceCopilotEdits(cleanPrompt, targetRuntime, domainRule);
+        compiled = this.enhanceCopilotEdits(cleanPrompt, targetRuntime, domainRule); break;
       case "aider_diff":
-        return this.enhanceAiderDiff(cleanPrompt, targetRuntime, domainRule);
+        compiled = this.enhanceAiderDiff(cleanPrompt, targetRuntime, domainRule); break;
       case "devin_fullstack":
-        return this.enhanceDevinFullstack(cleanPrompt, targetRuntime, domainRule);
+        compiled = this.enhanceDevinFullstack(cleanPrompt, targetRuntime, domainRule); break;
       case "cline_mcp":
-        return this.enhanceClineMcp(cleanPrompt, targetRuntime, domainRule);
+        compiled = this.enhanceClineMcp(cleanPrompt, targetRuntime, domainRule); break;
 
       // Specialized
       case "precision":
-        return this.enhancePrecision(cleanPrompt, targetRuntime, domainRule);
+        compiled = this.enhancePrecision(cleanPrompt, targetRuntime, domainRule); break;
       case "adversarial":
-        return this.enhanceAdversarial(cleanPrompt, targetRuntime, domainRule);
+        compiled = this.enhanceAdversarial(cleanPrompt, targetRuntime, domainRule); break;
       case "executive":
-        return this.enhanceExecutive(cleanPrompt, domainRule);
+        compiled = this.enhanceExecutive(cleanPrompt, domainRule);
+        break;
+      default:
+        compiled = this.enhancePrecision(cleanPrompt, targetRuntime, domainRule);
+        break;
     }
+
+    // Inject Omni-Disciplinary Equalizer (Cross-pollination across Design & Systems Architecture)
+    if (equalizerBlock && !compiled.includes("### Disciplinary Equalizer")) {
+      if (profile === "claude_xml") {
+        compiled += `\n\n<disciplinary_equalizer>\n${equalizerBlock}\n</disciplinary_equalizer>`;
+      } else {
+        compiled += `\n\n${equalizerBlock}`;
+      }
+    }
+
+    // Inject Cognitive Scaffolding based on User Comprehension Profile
+    if (activeAudience === "explorer") {
+      if (profile === "claude_xml") {
+        compiled += `\n\n<audience_scaffolding>\n${scaffoldingDirectives}\n</audience_scaffolding>`;
+      } else {
+        compiled += `\n\n${scaffoldingDirectives}`;
+      }
+    } else if (activeAudience === "architect" && profile !== "openai_o" && profile !== "deepseek_r1") {
+      compiled += `\n\n${scaffoldingDirectives}`;
+    } else if (activeAudience === "executive" && profile !== "executive") {
+      compiled += `\n\n${scaffoldingDirectives}`;
+    }
+
+    return compiled;
   }
 
   private static stripFiller(text: string): string {
@@ -453,4 +500,34 @@ ${prompt}
 - Tone: Crisp, commanding, professional, zero marketing hyperbole.
 ${domainRule ? `- Industry Anchor: ${domainRule.domain}` : ""}`;
   }
+
+  private static getScaffoldingBlock(audience: CognitiveAudience): string {
+    switch (audience) {
+      case "explorer":
+        return `### Audience Scaffolding: Young Student & Beginner Friendly (All Ages)
+- Anchor key concepts in an intuitive real-world analogy before presenting any code or technical answers.
+- Break down the solution into bite-sized, friendly, numbered checkpoints with clear explanations.
+- Define any technical jargon simply in plain English; ensure zero patronizing tone or gatekeeping.
+- Code blocks must be completely runnable, fully commented, and free of hidden assumptions.`;
+
+      case "architect":
+        return `### Audience Scaffolding: Staff Systems Architect & Formal Verification
+- Maximize token-to-signal density; omit all conversational preamble, transitions, and pleasantries.
+- State formal computational invariants, memory safety constraints, and asymptotic complexity (Time/Space).
+- Deliver self-contained production artifacts with automated unit/integration test assertions.`;
+
+      case "executive":
+        return `### Audience Scaffolding: Executive Strategic Decision-Maker
+- Provide an Executive Summary highlighting business ROI, feasibility, and architecture trade-offs.
+- Structure technical comparisons in clear Markdown trade-off tables.
+- Outline risk mitigation strategies, resource requirements, and next immediate milestone.`;
+
+      case "practitioner":
+      default:
+        return `### Audience Scaffolding: Professional Practitioner
+- Deliver production-grade idiomatic code with robust error handling and type definitions.
+- Warn against common edge cases, boundary failures, and concurrency hazards.`;
+    }
+  }
+
 }

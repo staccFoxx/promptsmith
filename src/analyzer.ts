@@ -7,6 +7,7 @@
 import { KnowledgeBase } from "./knowledge_base";
 import { ModelBenchmarkEngine, BenchmarkTarget } from "./benchmarks";
 import { CognitivePatternEngine, CognitiveAnalysis } from "./learner";
+import { OmniEqualizerEngine, DisciplinaryLens, EqualizerProfile } from "./equalizer";
 
 export interface PromptMetrics {
   iqScore: number;
@@ -26,6 +27,8 @@ export interface PromptMetrics {
   missingElements: string[];
   benchmarks: BenchmarkTarget[];
   cognitive: CognitiveAnalysis;
+  discipline: DisciplinaryLens;
+  equalizer: EqualizerProfile;
 }
 
 export class PromptAnalyzer {
@@ -148,6 +151,11 @@ export class PromptAnalyzer {
     const cognitive = CognitivePatternEngine.analyzeCognitivePattern(text, detectedDomain);
     strengths.push(`Cognitive calibration: ${cognitive.audienceLabel} (Grade ${cognitive.fleschKincaidGrade})`);
 
+    // Disciplinary Equalizer Analysis
+    const discipline = OmniEqualizerEngine.detectDisciplinaryLens(text);
+    const equalizer = OmniEqualizerEngine.PROFILES[discipline];
+    strengths.push(`Equalizer Lens: ${equalizer.title} (${equalizer.primaryDomainFocus})`);
+
     // Multi-Model Benchmarks
     const benchmarks = ModelBenchmarkEngine.benchmarkPrompt(text);
 
@@ -168,7 +176,9 @@ export class PromptAnalyzer {
       weaknesses,
       missingElements,
       benchmarks,
-      cognitive
+      cognitive,
+      discipline,
+      equalizer
     };
   }
 
@@ -190,7 +200,9 @@ export class PromptAnalyzer {
       weaknesses: ["Prompt is empty"],
       missingElements: ["All core components"],
       benchmarks: ModelBenchmarkEngine.benchmarkPrompt(""),
-      cognitive: CognitivePatternEngine.analyzeCognitivePattern("")
+      cognitive: CognitivePatternEngine.analyzeCognitivePattern(""),
+      discipline: "creator",
+      equalizer: OmniEqualizerEngine.PROFILES["creator"]
     };
   }
 }

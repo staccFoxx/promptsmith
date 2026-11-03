@@ -7,12 +7,14 @@ import * as vscode from "vscode";
 import { PromptAnalyzer, PromptMetrics } from "./analyzer";
 import { PromptEnhancer, EnhancementProfile } from "./enhancer";
 import { CognitiveAudience } from "./learner";
+import { DisciplinaryLens } from "./equalizer";
 import { PromptWebviewProvider } from "./webview";
 import * as https from "https";
 
 export function activate(context: vscode.ExtensionContext) {
   let activeProfile: EnhancementProfile = "claude_xml";
   let activeAudience: CognitiveAudience | undefined = undefined;
+  let activeDiscipline: DisciplinaryLens | undefined = undefined;
   let lastPrompt = "";
   let lastEnhanced = "";
   let lastMetrics: PromptMetrics = PromptAnalyzer.analyze("");
@@ -45,7 +47,8 @@ export function activate(context: vscode.ExtensionContext) {
       activeProfile,
       isLicensed,
       trialCount,
-      activeAudience
+      activeAudience,
+      activeDiscipline
     );
   }
 
@@ -61,12 +64,17 @@ export function activate(context: vscode.ExtensionContext) {
       switch (data.command) {
         case "changeProfile":
           activeProfile = data.profile;
-          lastEnhanced = PromptEnhancer.enhance(lastPrompt, activeProfile, targetRuntime, activeAudience);
+          lastEnhanced = PromptEnhancer.enhance(lastPrompt, activeProfile, targetRuntime, activeAudience, activeDiscipline);
           broadcastViewUpdate();
           break;
         case "changeAudience":
           activeAudience = data.audience === "auto" ? undefined : data.audience;
-          lastEnhanced = PromptEnhancer.enhance(lastPrompt, activeProfile, targetRuntime, activeAudience);
+          lastEnhanced = PromptEnhancer.enhance(lastPrompt, activeProfile, targetRuntime, activeAudience, activeDiscipline);
+          broadcastViewUpdate();
+          break;
+        case "changeDiscipline":
+          activeDiscipline = data.discipline === "auto" ? undefined : data.discipline;
+          lastEnhanced = PromptEnhancer.enhance(lastPrompt, activeProfile, targetRuntime, activeAudience, activeDiscipline);
           broadcastViewUpdate();
           break;
         case "insert":
@@ -222,7 +230,7 @@ export function activate(context: vscode.ExtensionContext) {
 
     lastPrompt = text;
     lastMetrics = PromptAnalyzer.analyze(text, targetRuntime);
-    lastEnhanced = PromptEnhancer.enhance(text, activeProfile, targetRuntime, activeAudience);
+    lastEnhanced = PromptEnhancer.enhance(text, activeProfile, targetRuntime, activeAudience, activeDiscipline);
 
     statusBar.text = `$(sparkle)`;
     statusBar.tooltip = `PromptSmith | Score: ${lastMetrics.iqScore}/100 (-${lastMetrics.tokenSavingsPercent}% words)`;
