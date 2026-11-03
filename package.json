@@ -1,0 +1,119 @@
+{
+  "name": "promptsmith-ai",
+  "displayName": "PromptSmith AI - Prompt Companion & Optimizer",
+  "description": "A simple prompt companion that rewrites instructions for Claude, ChatGPT, o1, and Gemini. Trims wasted words, tests model compatibility, and includes a draggable screen assistant.",
+  "version": "1.7.0",
+  "publisher": "bartholomew",
+  "icon": "icon.png",
+  "license": "MIT",
+  "galleryBanner": {
+    "color": "#0d1117",
+    "theme": "dark"
+  },
+  "pricing": "Free",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ivegotahunnitonit/bartholomew.git",
+    "directory": "packages/promptsmith-vscode"
+  },
+  "homepage": "https://bartholomew.info",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Machine Learning",
+    "Programming Languages",
+    "Other"
+  ],
+  "keywords": [
+    "prompt",
+    "prompts",
+    "prompt-engineering",
+    "prompt-optimizer",
+    "cursor",
+    "claude",
+    "claude-code",
+    "windsurf",
+    "copilot",
+    "gpt-4o",
+    "gemini",
+    "ai",
+    "llm",
+    "rlhf",
+    "tokens"
+  ],
+  "main": "./dist/extension.js",
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "promptsmith.improveSelection",
+        "title": "PromptSmith: Improve Selected Prompt",
+        "icon": "$(sparkle)"
+      },
+      {
+        "command": "promptsmith.openDashboard",
+        "title": "PromptSmith: Open Mascot Assistant",
+        "icon": "$(dashboard)"
+      },
+      {
+        "command": "promptsmith.unlockLicense",
+        "title": "PromptSmith: Activate $0.99 Lifetime Passkey",
+        "icon": "$(key)"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "promptsmith-container",
+          "title": "PromptSmith AI",
+          "icon": "$(sparkle)"
+        }
+      ]
+    },
+    "views": {
+      "promptsmith-container": [
+        {
+          "type": "webview",
+          "id": "promptsmith.sidebarView",
+          "name": "Prompt Assistant",
+          "visibility": "visible"
+        }
+      ]
+    },
+    "menus": {
+      "editor/context": [
+        {
+          "command": "promptsmith.improveSelection",
+          "group": "modification@1",
+          "when": "editorHasSelection"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "promptsmith.improveSelection",
+        "key": "alt+p",
+        "mac": "cmd+alt+p",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "promptsmith.openDashboard",
+        "key": "alt+shift+p",
+        "mac": "cmd+shift+p",
+        "when": "editorTextFocus"
+      }
+    ]
+  },
+  "scripts": {
+    "build": "node esbuild.js",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.80.0",
+    "esbuild": "^0.20.0"
+  }
+}
