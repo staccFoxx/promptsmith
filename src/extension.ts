@@ -77,6 +77,21 @@ export function activate(context: vscode.ExtensionContext) {
           lastEnhanced = PromptEnhancer.enhance(lastPrompt, activeProfile, targetRuntime, activeAudience, activeDiscipline);
           broadcastViewUpdate();
           break;
+        case "triggerBrainstorm":
+          activeProfile = "orthogonal_brainstorm";
+          lastEnhanced = PromptEnhancer.enhance(lastPrompt, activeProfile, targetRuntime, activeAudience, activeDiscipline);
+          broadcastViewUpdate();
+          vscode.window.showInformationMessage("PromptSmith: Synthesized Autonomous Lateral Brainstorming Blueprint!");
+          break;
+        case "selectVector":
+          {
+            const synth = OrthogonalPathfinder.synthesizeBrainstorm(lastPrompt);
+            const v = synth.vectors.find(x => x.id === data.vectorId) || synth.vectors[0];
+            lastEnhanced = `### PROMPTSMITH ORTHOGONAL PATH: ${v.title.toUpperCase()}\n**Codename**: ${v.codename}\n**Core Paradigm**: ${v.paradigm}\n\n#### Consensus Trap Strictly Forbidden\n[FORBIDDEN]: ${v.consensusTrapForbidden}\n\n#### Counter-Intuitive Breakthrough Mechanism\n${v.counterIntuitiveMechanism}\n\n#### Concrete Architecture & Implementation Pattern\n${v.concreteArchitecture}\n\n#### Provocative Operator (de Bono PO)\n${v.provocativeOperator}\n\n#### Model Execution Directive\n${v.promptDirective}\n\n#### Target Task Specification\n${lastPrompt}`;
+            broadcastViewUpdate();
+            vscode.window.showInformationMessage(`PromptSmith: Applied ${v.title} Lateral Path!`);
+          }
+          break;
         case "insert":
           await insertIntoEditor(data.text);
           vscode.window.showInformationMessage("Prompt inserted into editor.");
@@ -238,6 +253,30 @@ export function activate(context: vscode.ExtensionContext) {
 
     // Reveal mascot panel or sidebar
     openMascotPanel();
+  });
+
+  // Command: Autonomous Lateral Brainstorming (Think Outside the Box)
+  const brainstormCmd = vscode.commands.registerCommand("promptsmith.brainstormSelection", async () => {
+    const editor = vscode.window.activeTextEditor;
+    if (!editor) {
+      vscode.window.showWarningMessage("Select prompt text in your editor first.");
+      return;
+    }
+    const selection = editor.selection;
+    const text = selection.isEmpty ? editor.document.getText() : editor.document.getText(selection);
+    if (!text.trim()) {
+      vscode.window.showWarningMessage("No text selected to brainstorm.");
+      return;
+    }
+    lastPrompt = text;
+    lastMetrics = PromptAnalyzer.analyze(text, targetRuntime);
+    activeProfile = "orthogonal_brainstorm";
+    lastEnhanced = PromptEnhancer.enhance(text, activeProfile, targetRuntime, activeAudience, activeDiscipline);
+    statusBar.text = `$(sparkle)`;
+    statusBar.tooltip = `PromptSmith | Lateral Brainstorm: Outside-the-box paths active`;
+    broadcastViewUpdate();
+    openMascotPanel();
+    vscode.window.showInformationMessage("PromptSmith: Autonomous Lateral Brainstorming Active - Thinking Outside the Box!");
   });
 
   // Command: Open Dashboard / Mascot Assistant

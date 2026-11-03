@@ -8,6 +8,7 @@ import { KnowledgeBase } from "./knowledge_base";
 import { ModelBenchmarkEngine, BenchmarkTarget } from "./benchmarks";
 import { CognitivePatternEngine, CognitiveAnalysis } from "./learner";
 import { OmniEqualizerEngine, DisciplinaryLens, EqualizerProfile } from "./equalizer";
+import { OrthogonalPathfinder, BrainstormSynthesis } from "./orthogonal";
 
 export interface PromptMetrics {
   iqScore: number;
@@ -29,6 +30,7 @@ export interface PromptMetrics {
   cognitive: CognitiveAnalysis;
   discipline: DisciplinaryLens;
   equalizer: EqualizerProfile;
+  brainstorm: BrainstormSynthesis;
 }
 
 export class PromptAnalyzer {
@@ -158,6 +160,7 @@ export class PromptAnalyzer {
 
     // Multi-Model Benchmarks
     const benchmarks = ModelBenchmarkEngine.benchmarkPrompt(text);
+    const brainstorm = OrthogonalPathfinder.synthesizeBrainstorm(text);
 
     return {
       iqScore,
@@ -178,7 +181,8 @@ export class PromptAnalyzer {
       benchmarks,
       cognitive,
       discipline,
-      equalizer
+      equalizer,
+      brainstorm
     };
   }
 
@@ -202,7 +206,8 @@ export class PromptAnalyzer {
       benchmarks: ModelBenchmarkEngine.benchmarkPrompt(""),
       cognitive: CognitivePatternEngine.analyzeCognitivePattern(""),
       discipline: "creator",
-      equalizer: OmniEqualizerEngine.PROFILES["creator"]
+      equalizer: OmniEqualizerEngine.PROFILES["creator"],
+      brainstorm: OrthogonalPathfinder.synthesizeBrainstorm("")
     };
   }
 }

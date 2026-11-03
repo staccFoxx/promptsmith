@@ -1,8 +1,8 @@
 {
   "name": "promptsmith-ai",
   "displayName": "PromptSmith - Prompt Companion & Optimizer",
-  "description": "Omni-Disciplinary AI Prompt Equalizer & Cognitive Pattern Engine. Levels the playing field across Architects, Designers, Analysts, and Everyday Creators.",
-  "version": "1.9.0",
+  "description": "PromptSmith - Autonomous Lateral Pathfinding, Cognitive Pattern Scaffolding & Omni-Disciplinary Prompt Equalizer.",
+  "version": "2.0.0",
   "publisher": "bartholomew",
   "icon": "icon.png",
   "license": "MIT",
@@ -58,6 +58,11 @@
         "command": "promptsmith.improveSelection",
         "title": "PromptSmith: Improve Selected Prompt",
         "icon": "$(sparkle)"
+      },
+      {
+        "command": "promptsmith.brainstormSelection",
+        "title": "PromptSmith: Autonomous Lateral Brainstorm (Think Outside the Box)",
+        "icon": "$(lightbulb)"
       },
       {
         "command": "promptsmith.openDashboard",

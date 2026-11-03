@@ -203,6 +203,90 @@ export class PromptWebviewProvider {
     }
 
     
+    
+    /* Autonomous Lateral Brainstormer */
+    .brainstorm-box {
+      border: 1px solid rgba(168, 85, 247, 0.4);
+      background: rgba(168, 85, 247, 0.05);
+      border-radius: 6px;
+      padding: 8px 10px;
+      margin-bottom: 8px;
+    }
+    .brainstorm-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .brainstorm-badge {
+      color: #c084fc;
+      background: rgba(168, 85, 247, 0.15);
+      padding: 1px 6px;
+      border-radius: 3px;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+    .vector-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 6px;
+      margin-top: 6px;
+    }
+    .vector-card {
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.02);
+      border-radius: 4px;
+      padding: 6px 8px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .vector-card:hover {
+      border-color: #c084fc;
+      background: rgba(168, 85, 247, 0.12);
+      transform: translateY(-1px);
+    }
+    .vector-card-title {
+      font-size: 10px;
+      font-weight: 700;
+      color: #e9d5ff;
+    }
+    .vector-card-desc {
+      font-size: 8.5px;
+      opacity: 0.8;
+      line-height: 1.3;
+    }
+    .brainstorm-cta-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 6px;
+      padding-top: 6px;
+      border-top: 1px solid rgba(168, 85, 247, 0.2);
+    }
+    .brainstorm-btn {
+      background: linear-gradient(135deg, #9333ea, #6366f1);
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      padding: 4px 10px;
+      font-size: 10px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: opacity 0.15s ease;
+    }
+    .brainstorm-btn:hover {
+      opacity: 0.9;
+    }
+
     /* Omni-Disciplinary Equalizer */
     .equalizer-box {
       background: rgba(255, 255, 255, 0.03);
@@ -577,6 +661,41 @@ export class PromptWebviewProvider {
         </div>
       </div>
 
+      
+      <!-- Autonomous Lateral Brainstormer & Orthogonal Ideation -->
+      <div class="brainstorm-box">
+        <div class="brainstorm-top">
+          <div style="display:flex; align-items:center; gap:6px;">
+            <span style="color:#e9d5ff;">Autonomous Lateral Brainstormer</span>
+            <span class="brainstorm-badge">Outside-the-Box Engine</span>
+          </div>
+          <span style="opacity:0.75; font-size:9px; color:#c084fc;">Transcend Consensus AI</span>
+        </div>
+        <div style="opacity:0.75; font-size:9px; margin-bottom:4px;">
+          Automatically detects &amp; forbids orthodox AI consensus traps; engineers 3 divergent orthogonal paths.
+        </div>
+        <div class="vector-grid">
+          <div class="vector-card" onclick="selectVector('inversion')" title="Click to apply Asymmetric Inversion (Jacobi/Munger)">
+            <div class="vector-card-title">Vector A: Inversion</div>
+            <div class="vector-card-desc">Forbids conventional caching/CRUD; inverts the constraint entirely.</div>
+          </div>
+          <div class="vector-card" onclick="selectVector('bisociation')" title="Click to apply Cross-Domain Bisociation (Koestler)">
+            <div class="vector-card-title">Vector B: Bisociation</div>
+            <div class="vector-card-desc">Cross-pollinates with Cellular Immunology, Mycelium, or Quantum optics.</div>
+          </div>
+          <div class="vector-card" onclick="selectVector('transcendence')" title="Click to apply Paradigm Transcendence (Moonshot)">
+            <div class="vector-card-title">Vector C: Transcendence</div>
+            <div class="vector-card-desc">Zero-state edge execution, mathematical determinism, zero coordination.</div>
+          </div>
+        </div>
+        <div class="brainstorm-cta-row">
+          <span style="font-size:8.5px; opacity:0.8; color:#cbd5e1;">Consensus Traps: <b style="color:#f87171;">Blocked</b></span>
+          <button class="brainstorm-btn" onclick="triggerBrainstorm()" title="Synthesize master outside-the-box blueprint that forces models out of standard tropes">
+            Synthesize Orthogonal Blueprint
+          </button>
+        </div>
+      </div>
+
       <!-- Category Switcher -->
       <div class="target-tabs">
         <button class="target-tab active" id="tab-models" onclick="switchCategory('models')">Frontier Models (8)</button>
@@ -692,6 +811,14 @@ export class PromptWebviewProvider {
     }
 
     
+    function triggerBrainstorm() {
+      vscode.postMessage({ command: "triggerBrainstorm" });
+    }
+
+    function selectVector(vectorId) {
+      vscode.postMessage({ command: "selectVector", vectorId });
+    }
+
     function setDiscipline(discipline) {
       vscode.postMessage({ command: "changeDiscipline", discipline });
     }

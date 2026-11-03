@@ -9,6 +9,7 @@
 import { KnowledgeBase, DomainRule } from "./knowledge_base";
 import { CognitivePatternEngine, CognitiveAnalysis, CognitiveAudience } from "./learner";
 import { OmniEqualizerEngine, DisciplinaryLens } from "./equalizer";
+import { OrthogonalPathfinder } from "./orthogonal";
 
 export type EnhancementProfile =
   | "precision"
@@ -28,7 +29,8 @@ export type EnhancementProfile =
   | "devin_fullstack"
   | "cline_mcp"
   | "adversarial"
-  | "executive";
+  | "executive"
+  | "orthogonal_brainstorm";
 
 export class PromptEnhancer {
   public static enhance(
@@ -96,6 +98,9 @@ export class PromptEnhancer {
         compiled = this.enhanceAdversarial(cleanPrompt, targetRuntime, domainRule); break;
       case "executive":
         compiled = this.enhanceExecutive(cleanPrompt, domainRule);
+        break;
+      case "orthogonal_brainstorm":
+        compiled = OrthogonalPathfinder.synthesizeBrainstorm(cleanPrompt).masterBrainstormPrompt;
         break;
       default:
         compiled = this.enhancePrecision(cleanPrompt, targetRuntime, domainRule);
