@@ -61,6 +61,32 @@ export function activate(context: vscode.ExtensionContext) {
     }
   }
 
+  function showValueInterceptionToast(actionLabel: string) {
+    const origTokens = lastMetrics.estimatedTokens || Math.round(lastPrompt.length / 4) || 60;
+    const optTokens = lastMetrics.optimizedTokens || Math.round((lastEnhanced || "").length / 4) || 40;
+    const tokensSaved = Math.max(15, origTokens - optTokens);
+    const pct = Math.max(10, lastMetrics.tokenSavingsPercent || Math.round((tokensSaved / Math.max(1, origTokens)) * 100));
+    const costSaved = ((tokensSaved / 1000) * 0.015).toFixed(4);
+
+    if (isLicensed) {
+      vscode.window.showInformationMessage(`PromptSmith: ${actionLabel}! Trimmed ${tokensSaved} tokens (-${pct}%).`);
+    } else {
+      vscode.window.showInformationMessage(
+        `PromptSmith: ${actionLabel}! Trimmed ${tokensSaved} tokens (-${pct}%). Saved ~$${costSaved}.`,
+        "Unlock Unlimited Pro ($0.99/wk)",
+        "Enter Passkey"
+      ).then(choice => {
+        if (choice === "Unlock Unlimited Pro ($0.99/wk)") {
+          vscode.env.openExternal(vscode.Uri.parse("https://bartholomew.info/checkout/promptsmith?ref=editor_toast"));
+        } else if (choice === "Enter Passkey") {
+          vscode.commands.executeCommand("promptsmith.unlockLicense");
+        }
+      });
+    }
+  }
+
+
+
   function handleWebviewMessages(webview: vscode.Webview) {
     webview.onDidReceiveMessage(async (data) => {
       switch (data.command) {
@@ -96,7 +122,7 @@ export function activate(context: vscode.ExtensionContext) {
           break;
         case "insert":
           await insertIntoEditor(data.text);
-          vscode.window.showInformationMessage("Prompt inserted into editor.");
+          showValueInterceptionToast("Prompt inserted");
           break;
         case "copy":
           await vscode.env.clipboard.writeText(data.text);
@@ -114,7 +140,7 @@ export function activate(context: vscode.ExtensionContext) {
             isLicensed,
             trialCountRemaining: trialCount
           });
-          vscode.window.showInformationMessage("Polished prompt copied to clipboard.");
+          showValueInterceptionToast("Prompt copied");
           break;
         case "openCheckout":
           await vscode.env.openExternal(vscode.Uri.parse("https://bartholomew.info/checkout/promptsmith?ref=vscode"));
@@ -190,7 +216,7 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.window.registerUriHandler({
       async handleUri(uri: vscode.Uri) {
-        if (uri.path === "/activate") {
+        if (uri.path === "/activate" || uri.path === "/unlock") {
           const params = new URLSearchParams(uri.query);
           const key = params.get("key");
           if (key) {
