@@ -73,10 +73,10 @@ export function activate(context: vscode.ExtensionContext) {
     } else {
       vscode.window.showInformationMessage(
         `PromptSmith: ${actionLabel}! Trimmed ${tokensSaved} tokens (-${pct}%). Saved ~$${costSaved}.`,
-        "Unlock Unlimited Pro ($0.99/wk)",
+        "Unlock Developer Pro ($9/mo)",
         "Enter Passkey"
       ).then(choice => {
-        if (choice === "Unlock Unlimited Pro ($0.99/wk)") {
+        if (choice === "Unlock Developer Pro ($9/mo)") {
           vscode.env.openExternal(vscode.Uri.parse("https://bartholomew.info/checkout/promptsmith?ref=editor_toast"));
         } else if (choice === "Enter Passkey") {
           vscode.commands.executeCommand("promptsmith.unlockLicense");
@@ -152,6 +152,14 @@ export function activate(context: vscode.ExtensionContext) {
     });
   }
 
+
+  // Command: Contact Customer Support
+  context.subscriptions.push(
+    vscode.commands.registerCommand("promptsmith.contactSupport", () => {
+      vscode.env.openExternal(vscode.Uri.parse("mailto:help@bartholomew.info?subject=PromptSmith%20Support%20Inquiry"));
+    })
+  );
+
   // Webview View Provider for Sidebar
   class PromptSidebarProvider implements vscode.WebviewViewProvider {
     public static readonly viewType = "promptsmith.sidebarView";
@@ -208,7 +216,7 @@ export function activate(context: vscode.ExtensionContext) {
       // Fallback
     }
 
-    vscode.window.showErrorMessage("Invalid passkey. Passkeys start with PSMITH-PRO- or sk_live_btp_");
+    vscode.window.showErrorMessage("Invalid passkey. Need assistance? Contact help@bartholomew.info", "Contact Support").then(c => { if (c === "Contact Support") { vscode.env.openExternal(vscode.Uri.parse("mailto:help@bartholomew.info?subject=Passkey%20Assistance")); } });
     return false;
   }
 
@@ -270,11 +278,11 @@ export function activate(context: vscode.ExtensionContext) {
     if (!isLicensed) {
       if (trialCount <= 0) {
         const choice = await vscode.window.showInformationMessage(
-          "PromptSmith: Free trial completed. Unlock Pro access for $0.99 / week?",
-          "Subscribe for $0.99/wk",
+          "PromptSmith: Free trial completed (10/10 improvements used). Unlock Developer Pro ($9/mo) or enter passkey.",
+          "Subscribe ($9/mo)",
           "Enter Passkey"
         );
-        if (choice === "Subscribe for $0.99/wk") {
+        if (choice === "Subscribe ($9/mo)") {
           vscode.env.openExternal(vscode.Uri.parse("https://bartholomew.info/checkout/promptsmith?ref=vscode"));
         } else if (choice === "Enter Passkey") {
           vscode.commands.executeCommand("promptsmith.unlockLicense");
