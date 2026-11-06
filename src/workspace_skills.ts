@@ -28,6 +28,24 @@ export interface AmbiguityFinding {
   fixSnippet: string;
 }
 
+export interface SecretFinding {
+  label: string;
+  count: number;
+}
+
+export interface ActiveModelHookInfo {
+  hostIde: string;
+  detectedModelLabel: string;
+  recommendedProfile: string;
+  nativeRuleFile: ".cursorrules" | "CLAUDE.md" | ".windsurfrules" | ".github/copilot-instructions.md";
+}
+
+export interface VoiceCompileResult {
+  cleaned: string;
+  corrections: number;
+  detectedCommand: string | null;
+}
+
 export interface CostSimulation {
   originalTokensPerTurn: number;
   optimizedTokensPerTurn: number;
@@ -197,8 +215,9 @@ export class PromptWorkspaceToolkit {
    * 3. Compact and write a persistent IDE instruction file (.cursorrules, CLAUDE.md, or .windsurfrules).
    */
   public static async exportWorkspaceRulesFile(
-    targetFile: ".cursorrules" | "CLAUDE.md" | ".windsurfrules",
-    compiledBlueprint: string
+    targetFile: ".cursorrules" | "CLAUDE.md" | ".windsurfrules" | ".github/copilot-instructions.md",
+    compiledBlueprint: string,
+    silent = false
   ): Promise<{ ok: boolean; filePath?: string; message: string }> {
     const folders = vscode.workspace.workspaceFolders;
     if (!folders || folders.length === 0) {
@@ -210,6 +229,8 @@ export class PromptWorkspaceToolkit {
 
     const rootPath = folders[0].uri.fsPath;
     const outPath = path.join(rootPath, targetFile);
+    const parentDir = path.dirname(outPath);
+    if (!fs.existsSync(parentDir)) { fs.mkdirSync(parentDir, { recursive: true }); }
     const ctx = this.inspectWorkspace();
 
     const header = `# ${targetFile} - Generated & Compacted by PromptSmith\n` +
@@ -229,8 +250,10 @@ export class PromptWorkspaceToolkit {
 
     try {
       fs.writeFileSync(outPath, body, "utf-8");
-      const doc = await vscode.workspace.openTextDocument(outPath);
-      await vscode.window.showTextDocument(doc, { preview: false });
+      if (!silent) {
+        const doc = await vscode.workspace.openTextDocument(outPath);
+        await vscode.window.showTextDocument(doc, { preview: false });
+      }
       return {
         ok: true,
         filePath: outPath,
@@ -242,6 +265,215 @@ export class PromptWorkspaceToolkit {
         message: `Failed to write ${targetFile}: ${err instanceof Error ? err.message : String(err)}`
       };
     }
+  }
+
+  /**
+   * 3A. Pre-Flight Secret & Credential Leak Scrubber
+   */
+  public static detectSecrets(prompt: string): SecretFinding[] {
+    const raw = (prompt || "").trim();
+    if (!raw) return [];
+    const patterns: { label: string; regex: RegExp }[] = [
+      { label: "OpenAI / Anthropic Key (sk-...)", regex: /\bsk-(?:proj-|ant-)?[A-Za-z0-9_-]{16,}\b/g },
+      { label: "GitHub Token (ghp_/github_pat_)", regex: /\b(?:ghp_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,})\b/g },
+      { label: "AWS Access Key (AKIA...)", regex: /\bAKIA[0-9A-Z]{16}\b/g },
+      { label: "Google API Key (AIza...)", regex: /\bAIza[0-9A-Za-z_-]{35}\b/g },
+      { label: "Slack Token (xoxb/xoxp)", regex: /\bxox[baprs]-[0-9A-Za-z-]{10,}\b/g },
+      { label: "Stripe Live Key (sk_live_/rk_live_)", regex: /\b(?:sk|rk)_live_[0-9A-Za-z]{16,}\b/g },
+      { label: "Bearer / JWT Token", regex: /\beyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\b/g },
+      { label: "Database URI with Password", regex: /\b(?:postgres|postgresql|mysql|mongodb(?:\+srv)?|redis):\/\/[^:\s]+:[^@\s]+@[^\s]+/gi },
+      { label: "Private Key Block", regex: /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/g }
+    ];
+    const findings: SecretFinding[] = [];
+    for (const p of patterns) {
+      const m = raw.match(p.regex);
+      if (m && m.length > 0) findings.push({ label: p.label, count: m.length });
+    }
+    return findings;
+  }
+
+  public static scrubSecrets(prompt: string): { scrubbed: string; redactedCount: number } {
+    let text = prompt || "";
+    let redactedCount = 0;
+    const replacements: { regex: RegExp; token: string }[] = [
+      { regex: /\bsk-(?:proj-|ant-)?[A-Za-z0-9_-]{16,}\b/g, token: "[REDACTED_API_KEY]" },
+      { regex: /\b(?:ghp_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,})\b/g, token: "[REDACTED_GITHUB_TOKEN]" },
+      { regex: /\bAKIA[0-9A-Z]{16}\b/g, token: "[REDACTED_AWS_KEY]" },
+      { regex: /\bAIza[0-9A-Za-z_-]{35}\b/g, token: "[REDACTED_GCP_KEY]" },
+      { regex: /\bxox[baprs]-[0-9A-Za-z-]{10,}\b/g, token: "[REDACTED_SLACK_TOKEN]" },
+      { regex: /\b(?:sk|rk)_live_[0-9A-Za-z]{16,}\b/g, token: "[REDACTED_STRIPE_KEY]" },
+      { regex: /\beyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\b/g, token: "[REDACTED_JWT]" },
+      { regex: /\b((?:postgres|postgresql|mysql|mongodb(?:\+srv)?|redis):\/\/[^:\s]+:)([^@\s]+)(@[^\s]+)/gi, token: "$1[REDACTED_DB_PASS]$3" },
+      { regex: /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----[\s\S]*?-----END (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/g, token: "[REDACTED_PRIVATE_KEY_BLOCK]" }
+    ];
+    for (const r of replacements) {
+      const m = text.match(r.regex);
+      if (m && m.length > 0) {
+        redactedCount += m.length;
+        text = text.replace(r.regex, r.token);
+      }
+    }
+    return { scrubbed: text, redactedCount };
+  }
+
+  /**
+   * 3B. Zero-Clutter Model Auto-Hook Detector
+   * Automatically detects the host IDE and active coding assistant right after installation.
+   */
+  public static detectActiveModelHook(): ActiveModelHookInfo {
+    const appName = (vscode.env.appName || "").toLowerCase();
+    const folders = vscode.workspace.workspaceFolders;
+    const rootPath = folders && folders.length > 0 ? folders[0].uri.fsPath : "";
+
+    if (appName.includes("cursor")) {
+      return {
+        hostIde: "Cursor IDE",
+        detectedModelLabel: "Cursor Composer (Claude 3.7)",
+        recommendedProfile: "cursor_composer",
+        nativeRuleFile: ".cursorrules"
+      };
+    }
+    if (appName.includes("windsurf")) {
+      return {
+        hostIde: "Windsurf IDE",
+        detectedModelLabel: "Windsurf Cascade",
+        recommendedProfile: "windsurf_cascade",
+        nativeRuleFile: ".windsurfrules"
+      };
+    }
+    if (appName.includes("antigravity")) {
+      return {
+        hostIde: "Antigravity IDE",
+        detectedModelLabel: "Gemini 2.5 Pro Agent",
+        recommendedProfile: "gemini_context",
+        nativeRuleFile: "CLAUDE.md"
+      };
+    }
+
+    // Check installed extensions in VS Code
+    const exts = vscode.extensions.all.map(e => e.id.toLowerCase());
+    if (exts.some(id => id.includes("claude-code") || id.includes("anthropic"))) {
+      return {
+        hostIde: "VS Code",
+        detectedModelLabel: "Claude Code CLI",
+        recommendedProfile: "claude_code",
+        nativeRuleFile: "CLAUDE.md"
+      };
+    }
+    if (exts.some(id => id.includes("claude-dev") || id.includes("cline") || id.includes("roo-cline"))) {
+      return {
+        hostIde: "VS Code",
+        detectedModelLabel: "Cline / Roo Agent",
+        recommendedProfile: "cline_mcp",
+        nativeRuleFile: ".cursorrules"
+      };
+    }
+    if (exts.some(id => id.includes("github.copilot"))) {
+      return {
+        hostIde: "VS Code",
+        detectedModelLabel: "GitHub Copilot Edits",
+        recommendedProfile: "copilot_edits",
+        nativeRuleFile: ".github/copilot-instructions.md"
+      };
+    }
+
+    // Fallback check for workspace rule files
+    if (rootPath) {
+      if (fs.existsSync(path.join(rootPath, ".cursorrules"))) {
+        return { hostIde: "VS Code", detectedModelLabel: "Cursor Rules Bridge", recommendedProfile: "cursor_composer", nativeRuleFile: ".cursorrules" };
+      }
+      if (fs.existsSync(path.join(rootPath, ".windsurfrules"))) {
+        return { hostIde: "VS Code", detectedModelLabel: "Windsurf Cascade Bridge", recommendedProfile: "windsurf_cascade", nativeRuleFile: ".windsurfrules" };
+      }
+      if (fs.existsSync(path.join(rootPath, "CLAUDE.md"))) {
+        return { hostIde: "VS Code", detectedModelLabel: "Claude Code Bridge", recommendedProfile: "claude_code", nativeRuleFile: "CLAUDE.md" };
+      }
+    }
+
+    return {
+      hostIde: vscode.env.appName || "VS Code",
+      detectedModelLabel: "Claude 3.7 / Frontier Auto",
+      recommendedProfile: "claude_xml",
+      nativeRuleFile: ".github/copilot-instructions.md"
+    };
+  }
+
+  /**
+   * 3C. Voice-to-Spec Dictation & Spoken-Thought Disfluency Compiler
+   * Cleans spoken stream-of-consciousness thoughts, mid-sentence self-corrections, and spoken code tokens.
+   */
+  public static compileVoiceTranscript(rawSpeech: string): VoiceCompileResult {
+    const raw = (rawSpeech || "").trim();
+    if (!raw) return { cleaned: "", corrections: 0, detectedCommand: null };
+    let text = raw;
+    let corrections = 0;
+    let detectedCommand: string | null = null;
+
+    const cmdPatterns: { rx: RegExp; cmd: string }[] = [
+      { rx: /[,.\s]*(?:promptsmith\s+)?(?:please\s+)?optimize\s+(?:this\s+)?for\s+claude\s*$/i, cmd: "claude_xml" },
+      { rx: /[,.\s]*(?:promptsmith\s+)?(?:please\s+)?optimize\s+(?:this\s+)?for\s+(?:openai|o3|gpt)\s*$/i, cmd: "openai_o" },
+      { rx: /[,.\s]*(?:promptsmith\s+)?(?:please\s+)?optimize\s+(?:this\s+)?for\s+cursor\s*$/i, cmd: "cursor_composer" },
+      { rx: /[,.\s]*(?:promptsmith\s+)?(?:please\s+)?optimize\s+(?:this\s+)?for\s+copilot\s*$/i, cmd: "copilot_edits" },
+      { rx: /[,.\s]*(?:promptsmith\s+)?(?:please\s+)?scrub\s+(?:all\s+)?secrets\s*$/i, cmd: "scrub_secrets" },
+      { rx: /[,.\s]*(?:promptsmith\s+)?(?:please\s+)?ground\s+in\s+workspace\s*$/i, cmd: "ground_workspace" },
+      { rx: /[,.\s]*(?:promptsmith\s+)?(?:please\s+)?brainstorm(?:\s+this)?\s*$/i, cmd: "orthogonal_brainstorm" }
+    ];
+    for (const p of cmdPatterns) {
+      if (p.rx.test(text)) {
+        detectedCommand = p.cmd;
+        text = text.replace(p.rx, "");
+        corrections++;
+      }
+    }
+
+    // Resolve mid-sentence spoken backtracks ("use Express, no wait use FastAPI")
+    const backtrackRx = /([^.,;!?]+?)(?:,\s*|\s+)(?:no\s+wait(?:\s+actually)?|scratch\s+that|actually\s+no|wait\s+no\s+make\s+it|i\s+mean\s+instead)\s*,?\s*([^.,;!?]+)/gi;
+    text = text.replace(backtrackRx, (_m, _oldClause, newClause) => {
+      corrections++;
+      return String(newClause).trim();
+    });
+
+    // Convert spoken casing & symbol shorthand
+    text = text.replace(/\bsnake\s+case\s+([a-zA-Z0-9]+(?:\s+[a-zA-Z0-9]+){0,3})/gi, (_m, words) => {
+      corrections++;
+      return String(words).trim().toLowerCase().replace(/\s+/g, "_");
+    });
+    text = text.replace(/\bcamel\s+case\s+([a-zA-Z0-9]+(?:\s+[a-zA-Z0-9]+){0,3})/gi, (_m, words) => {
+      corrections++;
+      const parts = String(words).trim().toLowerCase().split(/\s+/);
+      return parts[0] + parts.slice(1).map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join("");
+    });
+    text = text.replace(/\bpascal\s+case\s+([a-zA-Z0-9]+(?:\s+[a-zA-Z0-9]+){0,3})/gi, (_m, words) => {
+      corrections++;
+      return String(words).trim().toLowerCase().split(/\s+/).map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join("");
+    });
+
+    const spokenSymbols: [RegExp, string][] = [
+      [/\bdot\s+env\b/gi, ".env"],
+      [/\bpackage\s+dot\s+json\b/gi, "package.json"],
+      [/\bts\s*config\s+dot\s+json\b/gi, "tsconfig.json"],
+      [/\btriple\s+equals\b/gi, "==="],
+      [/\bnot\s+equals\b/gi, "!=="],
+      [/\bfat\s+arrow\b/gi, "=>"]
+    ];
+    for (const [rx, sym] of spokenSymbols) {
+      if (rx.test(text)) {
+        corrections++;
+        text = text.replace(rx, sym);
+      }
+    }
+
+    // Strip verbal fillers
+    const fillerRx = /\b(?:uh+|um+|uhm+|er+|ah+|like\s+basically|you\s+know\s+what\s+i\s+mean|you\s+know|sort\s+of\s+like|kind\s+of\s+like|so\s+yeah|i\s+guess\s+like)\b[,.\s]*/gi;
+    const beforeFiller = text;
+    text = text.replace(fillerRx, " ");
+    if (text !== beforeFiller) corrections++;
+
+    text = text.replace(/\s{2,}/g, " ").trim();
+    if (text.length > 0) {
+      text = text.charAt(0).toUpperCase() + text.slice(1);
+    }
+    return { cleaned: text, corrections, detectedCommand };
   }
 
   /**

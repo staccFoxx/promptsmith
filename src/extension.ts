@@ -16,7 +16,9 @@ import * as https from "https";
 
 export function activate(context: vscode.ExtensionContext) {
   const sessionId = "sess_" + Math.random().toString(36).substring(2, 10);
-  let activeProfile: EnhancementProfile = "claude_xml";
+  const initialHook = PromptWorkspaceToolkit.detectActiveModelHook();
+  let activeProfile: EnhancementProfile = (initialHook.recommendedProfile as EnhancementProfile) || "claude_xml";
+  let autoHookEnabled = context.globalState.get<boolean>("promptsmith_auto_hook", true);
   let activeAudience: CognitiveAudience | undefined = undefined;
   let activeDiscipline: DisciplinaryLens | undefined = undefined;
   let lastPrompt = "";
@@ -32,8 +34,8 @@ export function activate(context: vscode.ExtensionContext) {
   // Status Bar Indicator (Icon-only, clean & minimal)
   const statusBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
   statusBar.command = "promptsmith.openDashboard";
-  statusBar.text = "$(sparkle)";
-  statusBar.tooltip = "PromptSmith | Press Alt+P to polish selected prompt";
+  statusBar.text = autoHookEnabled ? "$(sparkle) Auto-Hook" : "$(sparkle)";
+  statusBar.tooltip = `PromptSmith Auto-Hook: ${initialHook.detectedModelLabel} (${initialHook.hostIde}) | Alt+P to polish`;
   statusBar.show();
   context.subscriptions.push(statusBar);
 
@@ -42,6 +44,20 @@ export function activate(context: vscode.ExtensionContext) {
 
   // Floating & dockable Webview Panel reference
   let assistantPanel: vscode.WebviewPanel | undefined;
+
+  function getHistoryVault(): { ts: string; raw: string; compiled: string; profile: string }[] {
+    return context.globalState.get<{ ts: string; raw: string; compiled: string; profile: string }[]>("promptsmith_history_vault", []);
+  }
+
+  async function recordHistoryItem(raw: string, compiled: string, prof: string) {
+    const cleanRaw = (raw || "").trim();
+    if (!cleanRaw || cleanRaw.startsWith("Select text in your editor")) return;
+    let list = getHistoryVault().filter(x => x.raw !== cleanRaw);
+    const nowStr = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    list.unshift({ ts: nowStr, raw: cleanRaw.slice(0, 1200), compiled: (compiled || "").slice(0, 4000), profile: prof });
+    if (list.length > 8) list = list.slice(0, 8);
+    await context.globalState.update("promptsmith_history_vault", list);
+  }
 
   function getPanelHtml(): string {
     return PromptWebviewProvider.getHtml(
@@ -52,7 +68,10 @@ export function activate(context: vscode.ExtensionContext) {
       isLicensed,
       trialCount,
       activeAudience,
-      activeDiscipline
+      activeDiscipline,
+      autoHookEnabled,
+      initialHook.detectedModelLabel,
+      getHistoryVault()
     );
   }
 
@@ -139,10 +158,18 @@ export function activate(context: vscode.ExtensionContext) {
             }
             if (!(await checkAndConsumeTrial())) return;
             if (data.profile) activeProfile = data.profile;
-            lastPrompt = rawInput;
+            const voiceRes = PromptWorkspaceToolkit.compileVoiceTranscript(rawInput);
+            lastPrompt = voiceRes.corrections > 0 ? voiceRes.cleaned : rawInput;
+            if (voiceRes.detectedCommand && voiceRes.detectedCommand !== "scrub_secrets" && voiceRes.detectedCommand !== "ground_workspace") {
+              activeProfile = voiceRes.detectedCommand as EnhancementProfile;
+            }
             lastMetrics = PromptAnalyzer.analyze(lastPrompt, targetRuntime);
             lastEnhanced = PromptEnhancer.enhance(lastPrompt, activeProfile, targetRuntime, activeAudience, activeDiscipline);
-            statusBar.tooltip = `PromptSmith | Score: ${lastMetrics.iqScore}/100 (-${lastMetrics.tokenSavingsPercent}% words)`;
+            await recordHistoryItem(lastPrompt, lastEnhanced, activeProfile);
+            if (autoHookEnabled) {
+              await vscode.env.clipboard.writeText(lastEnhanced);
+            }
+            statusBar.tooltip = `PromptSmith Auto-Hook (${initialHook.detectedModelLabel}) | Score: ${lastMetrics.iqScore}/100 (-${lastMetrics.tokenSavingsPercent}% words)`;
             broadcastViewUpdate();
             PromptSmithTelemetry.trackEvent(context, {
               sessionId,
@@ -176,7 +203,7 @@ export function activate(context: vscode.ExtensionContext) {
         case "exportRulesFile":
           {
             ensureActivePrompt(data.text);
-            const targetFile = (data.targetFile || ".cursorrules") as ".cursorrules" | "CLAUDE.md" | ".windsurfrules";
+            const targetFile = (data.targetFile || ".cursorrules") as ".cursorrules" | "CLAUDE.md" | ".windsurfrules" | ".github/copilot-instructions.md";
             const blueprint = (data.compiled || lastEnhanced || lastPrompt || "").trim();
             const res = await PromptWorkspaceToolkit.exportWorkspaceRulesFile(targetFile, blueprint);
             if (res.ok) {
@@ -184,6 +211,65 @@ export function activate(context: vscode.ExtensionContext) {
             } else {
               vscode.window.showWarningMessage(`PromptSmith: ${res.message}`);
             }
+          }
+          break;
+        case "scrubSecrets":
+          {
+            const raw = ensureActivePrompt(data.text);
+            const { scrubbed, redactedCount } = PromptWorkspaceToolkit.scrubSecrets(raw);
+            lastPrompt = scrubbed;
+            lastMetrics = PromptAnalyzer.analyze(lastPrompt, targetRuntime);
+            lastEnhanced = PromptEnhancer.enhance(lastPrompt, activeProfile, targetRuntime, activeAudience, activeDiscipline);
+            broadcastViewUpdate();
+            vscode.window.showInformationMessage(`PromptSmith Secret Guard: Redacted ${redactedCount} exposed credential(s).`);
+          }
+          break;
+        case "cleanVoiceStream":
+          {
+            const raw = ensureActivePrompt(data.text);
+            const vRes = PromptWorkspaceToolkit.compileVoiceTranscript(raw);
+            lastPrompt = vRes.cleaned || raw;
+            if (vRes.detectedCommand && vRes.detectedCommand !== "scrub_secrets" && vRes.detectedCommand !== "ground_workspace") {
+              activeProfile = vRes.detectedCommand as EnhancementProfile;
+            }
+            lastMetrics = PromptAnalyzer.analyze(lastPrompt, targetRuntime);
+            lastEnhanced = PromptEnhancer.enhance(lastPrompt, activeProfile, targetRuntime, activeAudience, activeDiscipline);
+            await recordHistoryItem(lastPrompt, lastEnhanced, activeProfile);
+            if (autoHookEnabled && lastEnhanced) {
+              await vscode.env.clipboard.writeText(lastEnhanced);
+            }
+            broadcastViewUpdate();
+            vscode.window.showInformationMessage(`PromptSmith Voice-to-Spec: Refined spoken thoughts (${vRes.corrections} disfluencies/self-corrections resolved).`);
+          }
+          break;
+        case "toggleAutoHook":
+          {
+            autoHookEnabled = Boolean(data.enabled);
+            await context.globalState.update("promptsmith_auto_hook", autoHookEnabled);
+            statusBar.text = autoHookEnabled ? "$(sparkle) Auto-Hook" : "$(sparkle)";
+            if (autoHookEnabled) {
+              activeProfile = (initialHook.recommendedProfile as EnhancementProfile) || activeProfile;
+              vscode.window.showInformationMessage(`PromptSmith Auto-Hook Active: Hooked alongside ${initialHook.detectedModelLabel}.`);
+            }
+            broadcastViewUpdate();
+          }
+          break;
+        case "loadHistoryItem":
+          {
+            const list = getHistoryVault();
+            const item = list[Number(data.index)];
+            if (item) {
+              lastPrompt = item.raw;
+              lastEnhanced = item.compiled;
+              lastMetrics = PromptAnalyzer.analyze(lastPrompt, targetRuntime);
+              broadcastViewUpdate();
+            }
+          }
+          break;
+        case "clearHistoryVault":
+          {
+            await context.globalState.update("promptsmith_history_vault", []);
+            broadcastViewUpdate();
           }
           break;
         case "applyAmbiguityFix":
@@ -298,13 +384,14 @@ export function activate(context: vscode.ExtensionContext) {
       [
         { label: ".cursorrules", description: "Cursor IDE workspace rules" },
         { label: "CLAUDE.md", description: "Claude Code CLI project memory & invariants" },
+        { label: ".github/copilot-instructions.md", description: "GitHub Copilot custom workspace instructions" },
         { label: ".windsurfrules", description: "Windsurf Cascade workspace rules" }
       ],
       { placeHolder: "Select the target AI rules file to generate & compact" }
     );
     if (!choice) return;
     const res = await PromptWorkspaceToolkit.exportWorkspaceRulesFile(
-      choice.label as ".cursorrules" | "CLAUDE.md" | ".windsurfrules",
+      choice.label as ".cursorrules" | "CLAUDE.md" | ".windsurfrules" | ".github/copilot-instructions.md",
       lastEnhanced || lastPrompt
     );
     if (res.ok) {
@@ -445,16 +532,24 @@ export function activate(context: vscode.ExtensionContext) {
 
     if (!(await checkAndConsumeTrial())) return;
 
-    lastPrompt = text;
-    lastMetrics = PromptAnalyzer.analyze(text, targetRuntime);
-    lastEnhanced = PromptEnhancer.enhance(text, activeProfile, targetRuntime, activeAudience, activeDiscipline);
+    const voiceCleaned = PromptWorkspaceToolkit.compileVoiceTranscript(text);
+    const { scrubbed } = PromptWorkspaceToolkit.scrubSecrets(voiceCleaned.corrections > 0 ? voiceCleaned.cleaned : text);
+    lastPrompt = scrubbed;
+    lastMetrics = PromptAnalyzer.analyze(lastPrompt, targetRuntime);
+    lastEnhanced = PromptEnhancer.enhance(lastPrompt, activeProfile, targetRuntime, activeAudience, activeDiscipline);
+    await recordHistoryItem(lastPrompt, lastEnhanced, activeProfile);
 
-    statusBar.text = `$(sparkle)`;
-    statusBar.tooltip = `PromptSmith | Score: ${lastMetrics.iqScore}/100 (-${lastMetrics.tokenSavingsPercent}% words)`;
+    statusBar.text = autoHookEnabled ? `$(sparkle) Auto-Hook` : `$(sparkle)`;
+    statusBar.tooltip = `PromptSmith Auto-Hook (${initialHook.detectedModelLabel}) | Score: ${lastMetrics.iqScore}/100 (-${lastMetrics.tokenSavingsPercent}% words)`;
     broadcastViewUpdate();
 
-    // Reveal mascot panel or sidebar
-    openMascotPanel();
+    if (autoHookEnabled) {
+      await vscode.env.clipboard.writeText(lastEnhanced);
+      await PromptWorkspaceToolkit.exportWorkspaceRulesFile(initialHook.nativeRuleFile, lastEnhanced, true);
+      showValueInterceptionToast(`Auto-Hooked for ${initialHook.detectedModelLabel} & copied to clipboard`);
+    } else {
+      openMascotPanel();
+    }
 
     PromptSmithTelemetry.trackEvent(context, {
       sessionId,
@@ -566,6 +661,62 @@ export function activate(context: vscode.ExtensionContext) {
     })
   );
 
+  const scrubSecretsCmd = vscode.commands.registerCommand("promptsmith.scrubSecrets", async () => {
+    const editor = vscode.window.activeTextEditor;
+    if (!editor) {
+      openMascotPanel();
+      return;
+    }
+    const sel = editor.selection;
+    const raw = sel.isEmpty ? editor.document.getText() : editor.document.getText(sel);
+    const { scrubbed, redactedCount } = PromptWorkspaceToolkit.scrubSecrets(raw);
+    if (redactedCount === 0) {
+      vscode.window.showInformationMessage("PromptSmith Secret Guard: 0 exposed credentials detected.");
+      return;
+    }
+    await editor.edit(eb => {
+      if (sel.isEmpty) {
+        eb.replace(new vscode.Range(editor.document.positionAt(0), editor.document.positionAt(raw.length)), scrubbed);
+      } else {
+        eb.replace(sel, scrubbed);
+      }
+    });
+    vscode.window.showInformationMessage(`PromptSmith Secret Guard: Redacted ${redactedCount} exposed credential(s).`);
+  });
+
+  const cleanVoiceCmd = vscode.commands.registerCommand("promptsmith.cleanVoiceStream", async () => {
+    const editor = vscode.window.activeTextEditor;
+    const raw = editor
+      ? (editor.selection.isEmpty ? editor.document.getText() : editor.document.getText(editor.selection))
+      : lastPrompt;
+    if (!raw || !raw.trim()) {
+      openMascotPanel();
+      vscode.window.showInformationMessage("Dictate or type your spoken thoughts first, then run Clean Voice Stream.");
+      return;
+    }
+    const vRes = PromptWorkspaceToolkit.compileVoiceTranscript(raw);
+    const { scrubbed } = PromptWorkspaceToolkit.scrubSecrets(vRes.cleaned);
+    lastPrompt = scrubbed;
+    lastMetrics = PromptAnalyzer.analyze(lastPrompt, targetRuntime);
+    lastEnhanced = PromptEnhancer.enhance(lastPrompt, activeProfile, targetRuntime, activeAudience, activeDiscipline);
+    await recordHistoryItem(lastPrompt, lastEnhanced, activeProfile);
+    if (autoHookEnabled) {
+      await vscode.env.clipboard.writeText(lastEnhanced);
+    }
+    broadcastViewUpdate();
+    vscode.window.showInformationMessage(`PromptSmith Voice-to-Spec: Resolved ${vRes.corrections} spoken disfluencies/self-corrections & copied spec.`);
+  });
+
+  const groundWorkspaceCmd = vscode.commands.registerCommand("promptsmith.groundWorkspace", async () => {
+    const ground = PromptWorkspaceToolkit.inspectWorkspace();
+    lastPrompt = lastPrompt ? `${lastPrompt}\n\n${ground.contextSummaryBlock}` : ground.contextSummaryBlock;
+    lastMetrics = PromptAnalyzer.analyze(lastPrompt, targetRuntime);
+    lastEnhanced = PromptEnhancer.enhance(lastPrompt, activeProfile, targetRuntime, activeAudience, activeDiscipline);
+    broadcastViewUpdate();
+    vscode.window.showInformationMessage(`PromptSmith: Grounded in ${ground.workspaceName} (${ground.detectedStack.join(", ") || ground.languageId}).`);
+  });
+
+  context.subscriptions.push(scrubSecretsCmd, cleanVoiceCmd, groundWorkspaceCmd);
   context.subscriptions.push(improveCmd, brainstormCmd, openDashboardCmd, unlockCmd, exportRulesCmd);
 }
 
