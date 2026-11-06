@@ -1,6 +1,6 @@
 /**
  * PromptSmith - Extension Entry Point
- * Draggable Mascot Companion, Multi-Model Prompt Optimizer, & $0.99 Frictionless Pro Passkey.
+ * Draggable Mascot Companion, Multi-Model Prompt Optimizer, Workspace Grounder & Pro Passkey.
  */
 
 import * as vscode from "vscode";
@@ -8,6 +8,8 @@ import { PromptAnalyzer, PromptMetrics } from "./analyzer";
 import { PromptEnhancer, EnhancementProfile } from "./enhancer";
 import { CognitiveAudience } from "./learner";
 import { DisciplinaryLens } from "./equalizer";
+import { OrthogonalPathfinder } from "./orthogonal";
+import { PromptWorkspaceToolkit } from "./workspace_skills";
 import { PromptWebviewProvider } from "./webview";
 import { PromptSmithTelemetry } from "./telemetry";
 import * as https from "https";
@@ -69,14 +71,14 @@ export function activate(context: vscode.ExtensionContext) {
     const costSaved = ((tokensSaved / 1000) * 0.015).toFixed(4);
 
     if (isLicensed) {
-      vscode.window.showInformationMessage(`PromptSmith: ${actionLabel}! Trimmed ${tokensSaved} tokens (-${pct}%).`);
+      vscode.window.showInformationMessage(`PromptSmith: ${actionLabel}. Trimmed ${tokensSaved} tokens (-${pct}%).`);
     } else {
       vscode.window.showInformationMessage(
-        `PromptSmith: ${actionLabel}! Trimmed ${tokensSaved} tokens (-${pct}%). Saved ~$${costSaved}.`,
-        "Unlock Developer Pro ($9/mo)",
+        `PromptSmith: ${actionLabel}. Trimmed ${tokensSaved} tokens (-${pct}%). Saved ~$${costSaved}.`,
+        "Unlock Developer Pro ($9/mo or $10)",
         "Enter Passkey"
       ).then(choice => {
-        if (choice === "Unlock Developer Pro ($9/mo)") {
+        if (choice === "Unlock Developer Pro ($9/mo or $10)") {
           vscode.env.openExternal(vscode.Uri.parse("https://bartholomew.info/checkout/promptsmith?ref=editor_toast"));
         } else if (choice === "Enter Passkey") {
           vscode.commands.executeCommand("promptsmith.unlockLicense");
@@ -85,39 +87,167 @@ export function activate(context: vscode.ExtensionContext) {
     }
   }
 
+  async function checkAndConsumeTrial(): Promise<boolean> {
+    if (isLicensed) return true;
+    if (trialCount <= 0) {
+      const choice = await vscode.window.showInformationMessage(
+        "PromptSmith: Free trial completed (10/10 improvements used). Unlock Developer Pro ($9/mo or $10 Passkey) or enter passkey.",
+        "Get Passkey ($9/mo or $10)",
+        "Enter Passkey"
+      );
+      if (choice === "Get Passkey ($9/mo or $10)") {
+        vscode.env.openExternal(vscode.Uri.parse("https://bartholomew.info/checkout/promptsmith?ref=vscode"));
+      } else if (choice === "Enter Passkey") {
+        vscode.commands.executeCommand("promptsmith.unlockLicense");
+      }
+      return false;
+    }
+    trialCount--;
+    await context.globalState.update(TRIAL_COUNT_KEY, trialCount);
+    return true;
+  }
 
+  function ensureActivePrompt(fallbackText?: string): string {
+    if (fallbackText && fallbackText.trim()) {
+      lastPrompt = fallbackText.trim();
+      lastMetrics = PromptAnalyzer.analyze(lastPrompt, targetRuntime);
+      return lastPrompt;
+    }
+    if (!lastPrompt.trim()) {
+      const editor = vscode.window.activeTextEditor;
+      if (editor) {
+        const sel = editor.selection;
+        const txt = sel.isEmpty ? editor.document.getText() : editor.document.getText(sel);
+        if (txt.trim()) {
+          lastPrompt = txt.trim();
+          lastMetrics = PromptAnalyzer.analyze(lastPrompt, targetRuntime);
+        }
+      }
+    }
+    return lastPrompt;
+  }
 
   function handleWebviewMessages(webview: vscode.Webview) {
     webview.onDidReceiveMessage(async (data) => {
       switch (data.command) {
+        case "optimizeInput":
+          {
+            const rawInput = (data.text || "").trim();
+            if (!rawInput) {
+              vscode.window.showWarningMessage("Type or paste a prompt in the Input Draft box first, or select text in your editor.");
+              return;
+            }
+            if (!(await checkAndConsumeTrial())) return;
+            if (data.profile) activeProfile = data.profile;
+            lastPrompt = rawInput;
+            lastMetrics = PromptAnalyzer.analyze(lastPrompt, targetRuntime);
+            lastEnhanced = PromptEnhancer.enhance(lastPrompt, activeProfile, targetRuntime, activeAudience, activeDiscipline);
+            statusBar.tooltip = `PromptSmith | Score: ${lastMetrics.iqScore}/100 (-${lastMetrics.tokenSavingsPercent}% words)`;
+            broadcastViewUpdate();
+            PromptSmithTelemetry.trackEvent(context, {
+              sessionId,
+              runtime: targetRuntime,
+              action: "improve",
+              profile: activeProfile,
+              audience: activeAudience,
+              discipline: activeDiscipline,
+              inputPrompt: lastPrompt,
+              enhancedPrompt: lastEnhanced,
+              originalWords: lastPrompt.split(/\s+/).filter(Boolean).length,
+              enhancedWords: lastEnhanced.split(/\s+/).filter(Boolean).length,
+              tokenReductionPct: lastMetrics.tokenSavingsPercent,
+              isLicensed,
+              trialCountRemaining: trialCount
+            });
+          }
+          break;
+        case "groundWorkspace":
+          {
+            ensureActivePrompt(data.text);
+            const ground = PromptWorkspaceToolkit.inspectWorkspace();
+            const basePrompt = lastPrompt ? `${lastPrompt}\n\n${ground.contextSummaryBlock}` : ground.contextSummaryBlock;
+            lastPrompt = basePrompt;
+            lastMetrics = PromptAnalyzer.analyze(lastPrompt, targetRuntime);
+            lastEnhanced = PromptEnhancer.enhance(lastPrompt, activeProfile, targetRuntime, activeAudience, activeDiscipline);
+            broadcastViewUpdate();
+            vscode.window.showInformationMessage(`PromptSmith: Injected workspace stack & symbols from ${ground.workspaceName}.`);
+          }
+          break;
+        case "exportRulesFile":
+          {
+            ensureActivePrompt(data.text);
+            const targetFile = (data.targetFile || ".cursorrules") as ".cursorrules" | "CLAUDE.md" | ".windsurfrules";
+            const blueprint = (data.compiled || lastEnhanced || lastPrompt || "").trim();
+            const res = await PromptWorkspaceToolkit.exportWorkspaceRulesFile(targetFile, blueprint);
+            if (res.ok) {
+              vscode.window.showInformationMessage(`PromptSmith: ${res.message}`);
+            } else {
+              vscode.window.showWarningMessage(`PromptSmith: ${res.message}`);
+            }
+          }
+          break;
+        case "applyAmbiguityFix":
+          {
+            const currentDraft = (data.text || lastPrompt || "").trim();
+            const snippet = (data.fixSnippet || "").trim();
+            const merged = currentDraft ? `${currentDraft}\n${snippet}` : snippet;
+            lastPrompt = merged;
+            lastMetrics = PromptAnalyzer.analyze(lastPrompt, targetRuntime);
+            lastEnhanced = PromptEnhancer.enhance(lastPrompt, activeProfile, targetRuntime, activeAudience, activeDiscipline);
+            broadcastViewUpdate();
+          }
+          break;
         case "changeProfile":
+          ensureActivePrompt(data.text);
           activeProfile = data.profile;
-          lastEnhanced = PromptEnhancer.enhance(lastPrompt, activeProfile, targetRuntime, activeAudience, activeDiscipline);
+          if (lastPrompt) {
+            lastMetrics = PromptAnalyzer.analyze(lastPrompt, targetRuntime);
+            lastEnhanced = PromptEnhancer.enhance(lastPrompt, activeProfile, targetRuntime, activeAudience, activeDiscipline);
+          }
           broadcastViewUpdate();
           break;
         case "changeAudience":
+          ensureActivePrompt(data.text);
           activeAudience = data.audience === "auto" ? undefined : data.audience;
-          lastEnhanced = PromptEnhancer.enhance(lastPrompt, activeProfile, targetRuntime, activeAudience, activeDiscipline);
+          if (lastPrompt) {
+            lastMetrics = PromptAnalyzer.analyze(lastPrompt, targetRuntime);
+            lastEnhanced = PromptEnhancer.enhance(lastPrompt, activeProfile, targetRuntime, activeAudience, activeDiscipline);
+          }
           broadcastViewUpdate();
           break;
         case "changeDiscipline":
+          ensureActivePrompt(data.text);
           activeDiscipline = data.discipline === "auto" ? undefined : data.discipline;
-          lastEnhanced = PromptEnhancer.enhance(lastPrompt, activeProfile, targetRuntime, activeAudience, activeDiscipline);
+          if (lastPrompt) {
+            lastMetrics = PromptAnalyzer.analyze(lastPrompt, targetRuntime);
+            lastEnhanced = PromptEnhancer.enhance(lastPrompt, activeProfile, targetRuntime, activeAudience, activeDiscipline);
+          }
           broadcastViewUpdate();
           break;
         case "triggerBrainstorm":
+          ensureActivePrompt(data.text);
+          if (!lastPrompt) {
+            vscode.window.showWarningMessage("Type or paste a prompt in the Input Draft box first.");
+            return;
+          }
           activeProfile = "orthogonal_brainstorm";
+          lastMetrics = PromptAnalyzer.analyze(lastPrompt, targetRuntime);
           lastEnhanced = PromptEnhancer.enhance(lastPrompt, activeProfile, targetRuntime, activeAudience, activeDiscipline);
           broadcastViewUpdate();
-          vscode.window.showInformationMessage("PromptSmith: Synthesized Autonomous Lateral Brainstorming Blueprint!");
+          vscode.window.showInformationMessage("PromptSmith: Synthesized Autonomous Lateral Brainstorming Blueprint.");
           break;
         case "selectVector":
           {
+            ensureActivePrompt(data.text);
+            if (!lastPrompt) {
+              vscode.window.showWarningMessage("Type or paste a prompt in the Input Draft box first.");
+              return;
+            }
             const synth = OrthogonalPathfinder.synthesizeBrainstorm(lastPrompt);
-            const v = synth.vectors.find(x => x.id === data.vectorId) || synth.vectors[0];
+            const v = synth.vectors.find((x: { id: string }) => x.id === data.vectorId) || synth.vectors[0];
             lastEnhanced = `### PROMPTSMITH ORTHOGONAL PATH: ${v.title.toUpperCase()}\n**Codename**: ${v.codename}\n**Core Paradigm**: ${v.paradigm}\n\n#### Consensus Trap Strictly Forbidden\n[FORBIDDEN]: ${v.consensusTrapForbidden}\n\n#### Counter-Intuitive Breakthrough Mechanism\n${v.counterIntuitiveMechanism}\n\n#### Concrete Architecture & Implementation Pattern\n${v.concreteArchitecture}\n\n#### Provocative Operator (de Bono PO)\n${v.provocativeOperator}\n\n#### Model Execution Directive\n${v.promptDirective}\n\n#### Target Task Specification\n${lastPrompt}`;
             broadcastViewUpdate();
-            vscode.window.showInformationMessage(`PromptSmith: Applied ${v.title} Lateral Path!`);
+            vscode.window.showInformationMessage(`PromptSmith: Applied ${v.title} Lateral Path.`);
           }
           break;
         case "insert":
@@ -145,6 +275,9 @@ export function activate(context: vscode.ExtensionContext) {
         case "openCheckout":
           await vscode.env.openExternal(vscode.Uri.parse("https://bartholomew.info/checkout/promptsmith?ref=vscode"));
           break;
+        case "enterPasskey":
+          await vscode.commands.executeCommand("promptsmith.unlockLicense");
+          break;
         case "unlockKey":
           await validateAndActivateKey(data.key);
           break;
@@ -152,13 +285,34 @@ export function activate(context: vscode.ExtensionContext) {
     });
   }
 
-
   // Command: Contact Customer Support
   context.subscriptions.push(
     vscode.commands.registerCommand("promptsmith.contactSupport", () => {
       vscode.env.openExternal(vscode.Uri.parse("mailto:help@bartholomew.info?subject=PromptSmith%20Support%20Inquiry"));
     })
   );
+
+  // Command: Export Workspace Rules (.cursorrules / CLAUDE.md / .windsurfrules)
+  const exportRulesCmd = vscode.commands.registerCommand("promptsmith.exportWorkspaceRules", async () => {
+    const choice = await vscode.window.showQuickPick(
+      [
+        { label: ".cursorrules", description: "Cursor IDE workspace rules" },
+        { label: "CLAUDE.md", description: "Claude Code CLI project memory & invariants" },
+        { label: ".windsurfrules", description: "Windsurf Cascade workspace rules" }
+      ],
+      { placeHolder: "Select the target AI rules file to generate & compact" }
+    );
+    if (!choice) return;
+    const res = await PromptWorkspaceToolkit.exportWorkspaceRulesFile(
+      choice.label as ".cursorrules" | "CLAUDE.md" | ".windsurfrules",
+      lastEnhanced || lastPrompt
+    );
+    if (res.ok) {
+      vscode.window.showInformationMessage(`PromptSmith: ${res.message}`);
+    } else {
+      vscode.window.showWarningMessage(`PromptSmith: ${res.message}`);
+    }
+  });
 
   // Webview View Provider for Sidebar
   class PromptSidebarProvider implements vscode.WebviewViewProvider {
@@ -189,34 +343,47 @@ export function activate(context: vscode.ExtensionContext) {
   );
 
   async function validateAndActivateKey(key: string): Promise<boolean> {
-    const cleanKey = (key || "").trim();
+    let cleanKey = (key || "").trim();
     if (!cleanKey) return false;
 
-    // Fast-path local validation
-    if (cleanKey.startsWith("PSMITH-PRO-") || cleanKey.startsWith("sk_live_btp_") || cleanKey === "BTP-SUPREME-PASSKEY" || cleanKey.length >= 20) {
-      isLicensed = true;
-      await context.globalState.update(LICENSE_KEY, true);
-      broadcastViewUpdate();
-      vscode.window.showInformationMessage("PromptSmith Pro Lifetime License Activated.");
-      return true;
+    // Support direct Stripe Checkout Session ID redemption (cs_live_... or cs_test_...)
+    if (/^cs_(live|test)_[a-zA-Z0-9]+$/.test(cleanKey)) {
+      const claimedKey = await claimStripeSessionKey(cleanKey);
+      if (claimedKey) {
+        cleanKey = claimedKey;
+      } else {
+        vscode.window.showErrorMessage("Could not verify that Stripe Session ID. Ensure checkout was completed or contact help@bartholomew.info.");
+        return false;
+      }
     }
 
-    // Remote verification via Bartholomew Gateway
+    cleanKey = cleanKey.toUpperCase();
+    if (!/^PSMITH-(PRO|TEAM|PASSKEY)-[0-9A-F]{5}(-[0-9A-F]{5}){3}$/.test(cleanKey)) {
+      vscode.window.showErrorMessage("Please enter a valid passkey (e.g. PSMITH-PRO-XXXXX-XXXXX-XXXXX-XXXXX) or Stripe Session ID.");
+      return false;
+    }
+
     try {
-      const url = `https://bartholomew.info/api/license/verify?key=${encodeURIComponent(cleanKey)}`;
-      const isValid = await verifyRemoteLicense(url);
+      const isValid = await verifyRemoteLicense(cleanKey);
       if (isValid) {
         isLicensed = true;
         await context.globalState.update(LICENSE_KEY, true);
         broadcastViewUpdate();
-        vscode.window.showInformationMessage("PromptSmith Pro Verified via Live Stripe Gateway.");
+        vscode.window.showInformationMessage("PromptSmith Pro Passkey Verified and Activated.");
         return true;
       }
     } catch {
-      // Fallback
+      // Verification error handled below
     }
 
-    vscode.window.showErrorMessage("Invalid passkey. Need assistance? Contact help@bartholomew.info", "Contact Support").then(c => { if (c === "Contact Support") { vscode.env.openExternal(vscode.Uri.parse("mailto:help@bartholomew.info?subject=Passkey%20Assistance")); } });
+    vscode.window.showErrorMessage(
+      "Passkey not recognized. Need assistance? Contact help@bartholomew.info",
+      "Contact Support"
+    ).then(c => {
+      if (c === "Contact Support") {
+        vscode.env.openExternal(vscode.Uri.parse("mailto:help@bartholomew.info?subject=Passkey%20Assistance"));
+      }
+    });
     return false;
   }
 
@@ -226,7 +393,7 @@ export function activate(context: vscode.ExtensionContext) {
       async handleUri(uri: vscode.Uri) {
         if (uri.path === "/activate" || uri.path === "/unlock") {
           const params = new URLSearchParams(uri.query);
-          const key = params.get("key");
+          const key = params.get("key") || params.get("session_id");
           if (key) {
             await validateAndActivateKey(key);
           }
@@ -262,7 +429,8 @@ export function activate(context: vscode.ExtensionContext) {
   const improveCmd = vscode.commands.registerCommand("promptsmith.improveSelection", async () => {
     const editor = vscode.window.activeTextEditor;
     if (!editor) {
-      vscode.window.showWarningMessage("Select prompt text in your editor first.");
+      openMascotPanel();
+      vscode.window.showInformationMessage("Opened PromptSmith Studio. Type a prompt directly or select text in an editor.");
       return;
     }
 
@@ -270,28 +438,12 @@ export function activate(context: vscode.ExtensionContext) {
     const text = selection.isEmpty ? editor.document.getText() : editor.document.getText(selection);
 
     if (!text.trim()) {
-      vscode.window.showWarningMessage("No text selected to improve.");
+      openMascotPanel();
+      vscode.window.showWarningMessage("No text selected in editor. Type your prompt in the PromptSmith Input Draft box.");
       return;
     }
 
-    // Trial check
-    if (!isLicensed) {
-      if (trialCount <= 0) {
-        const choice = await vscode.window.showInformationMessage(
-          "PromptSmith: Free trial completed (10/10 improvements used). Unlock Developer Pro ($9/mo) or enter passkey.",
-          "Subscribe ($9/mo)",
-          "Enter Passkey"
-        );
-        if (choice === "Subscribe ($9/mo)") {
-          vscode.env.openExternal(vscode.Uri.parse("https://bartholomew.info/checkout/promptsmith?ref=vscode"));
-        } else if (choice === "Enter Passkey") {
-          vscode.commands.executeCommand("promptsmith.unlockLicense");
-        }
-        return;
-      }
-      trialCount--;
-      await context.globalState.update(TRIAL_COUNT_KEY, trialCount);
-    }
+    if (!(await checkAndConsumeTrial())) return;
 
     lastPrompt = text;
     lastMetrics = PromptAnalyzer.analyze(text, targetRuntime);
@@ -324,14 +476,13 @@ export function activate(context: vscode.ExtensionContext) {
   // Command: Autonomous Lateral Brainstorming (Think Outside the Box)
   const brainstormCmd = vscode.commands.registerCommand("promptsmith.brainstormSelection", async () => {
     const editor = vscode.window.activeTextEditor;
-    if (!editor) {
-      vscode.window.showWarningMessage("Select prompt text in your editor first.");
-      return;
-    }
-    const selection = editor.selection;
-    const text = selection.isEmpty ? editor.document.getText() : editor.document.getText(selection);
-    if (!text.trim()) {
-      vscode.window.showWarningMessage("No text selected to brainstorm.");
+    const selectionText = editor
+      ? (editor.selection.isEmpty ? editor.document.getText() : editor.document.getText(editor.selection))
+      : "";
+    const text = selectionText.trim() || lastPrompt.trim();
+    if (!text) {
+      openMascotPanel();
+      vscode.window.showWarningMessage("Select prompt text in your editor or enter a draft in PromptSmith first.");
       return;
     }
     lastPrompt = text;
@@ -358,7 +509,7 @@ export function activate(context: vscode.ExtensionContext) {
       isLicensed,
       trialCountRemaining: trialCount
     });
-    vscode.window.showInformationMessage("PromptSmith: Autonomous Lateral Brainstorming Active - Thinking Outside the Box!");
+    vscode.window.showInformationMessage("PromptSmith: Autonomous Lateral Brainstorming Active.");
   });
 
   // Command: Open Dashboard / Mascot Assistant
@@ -372,21 +523,21 @@ export function activate(context: vscode.ExtensionContext) {
       profile: activeProfile,
       audience: activeAudience,
       discipline: activeDiscipline,
-      inputPrompt: text,
+      inputPrompt: lastPrompt,
       enhancedPrompt: lastEnhanced,
-      originalWords: text.split(/\s+/).filter(Boolean).length,
-      enhancedWords: lastEnhanced.split(/\s+/).filter(Boolean).length,
+      originalWords: lastPrompt ? lastPrompt.split(/\s+/).filter(Boolean).length : 0,
+      enhancedWords: lastEnhanced ? lastEnhanced.split(/\s+/).filter(Boolean).length : 0,
       tokenReductionPct: lastMetrics.tokenSavingsPercent,
       isLicensed,
       trialCountRemaining: trialCount
     });
   });
 
-  // Command: Unlock License Passkey ($0.99)
+  // Command: Unlock License Passkey ($9/mo or $10 Passkey)
   const unlockCmd = vscode.commands.registerCommand("promptsmith.unlockLicense", async () => {
     const key = await vscode.window.showInputBox({
-      prompt: "Enter your PromptSmith Pro Passkey ($0.99/wk) or Stripe Session ID",
-      placeHolder: "PSMITH-PRO-XXXX-XXXX"
+      prompt: "Enter your PromptSmith Pro Passkey ($9/mo or $10 Passkey) or Stripe Session ID (cs_live_...)",
+      placeHolder: "PSMITH-PRO-XXXXX-XXXXX-XXXXX-XXXXX"
     });
 
     if (key) {
@@ -415,24 +566,73 @@ export function activate(context: vscode.ExtensionContext) {
     })
   );
 
-  context.subscriptions.push(improveCmd, openDashboardCmd, unlockCmd);
+  context.subscriptions.push(improveCmd, brainstormCmd, openDashboardCmd, unlockCmd, exportRulesCmd);
 }
 
-function verifyRemoteLicense(urlStr: string): Promise<boolean> {
+function claimStripeSessionKey(sessionId: string): Promise<string | null> {
   return new Promise((resolve) => {
     try {
-      https.get(urlStr, (res) => {
-        let body = "";
-        res.on("data", (chunk) => (body += chunk));
-        res.on("end", () => {
-          try {
-            const data = JSON.parse(body);
-            resolve(Boolean(data && data.valid));
-          } catch {
-            resolve(false);
-          }
-        });
-      }).on("error", () => resolve(false));
+      const payload = JSON.stringify({ session_id: sessionId });
+      const req = https.request(
+        "https://us-central1-acn-26670.cloudfunctions.net/claimKey",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Content-Length": Buffer.byteLength(payload),
+          },
+        },
+        (res) => {
+          let body = "";
+          res.on("data", (chunk) => (body += chunk));
+          res.on("end", () => {
+            try {
+              const data = JSON.parse(body);
+              resolve(data && data.ok && data.key ? String(data.key) : null);
+            } catch {
+              resolve(null);
+            }
+          });
+        }
+      );
+      req.on("error", () => resolve(null));
+      req.write(payload);
+      req.end();
+    } catch {
+      resolve(null);
+    }
+  });
+}
+
+function verifyRemoteLicense(key: string): Promise<boolean> {
+  return new Promise((resolve) => {
+    try {
+      const payload = JSON.stringify({ key });
+      const req = https.request(
+        "https://us-central1-acn-26670.cloudfunctions.net/validateKey",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Content-Length": Buffer.byteLength(payload),
+          },
+        },
+        (res) => {
+          let body = "";
+          res.on("data", (chunk) => (body += chunk));
+          res.on("end", () => {
+            try {
+              const data = JSON.parse(body);
+              resolve(Boolean(data && data.valid));
+            } catch {
+              resolve(false);
+            }
+          });
+        }
+      );
+      req.on("error", () => resolve(false));
+      req.write(payload);
+      req.end();
     } catch {
       resolve(false);
     }
@@ -441,7 +641,10 @@ function verifyRemoteLicense(urlStr: string): Promise<boolean> {
 
 async function insertIntoEditor(text: string) {
   const editor = vscode.window.activeTextEditor;
-  if (!editor) return;
+  if (!editor) {
+    vscode.window.showWarningMessage("Open a text editor file first to insert the prompt, or click Copy.");
+    return;
+  }
 
   const selection = editor.selection;
   await editor.edit((editBuilder) => {

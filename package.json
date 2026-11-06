@@ -2,7 +2,7 @@
   "name": "promptsmith-ai",
   "displayName": "PromptSmith - Prompt Companion & Optimizer",
   "description": "Maximizes performance, reasoning accuracy, and token efficiency for frontier AI models.",
-  "version": "2.2.2",
+  "version": "2.3.3",
   "publisher": "bartholomew",
   "icon": "icon.png",
   "license": "MIT",
@@ -13,7 +13,7 @@
   "pricing": "Free",
   "repository": {
     "type": "git",
-    "url": "https://github.com/ivegotahunnitonit/bartholomew.git",
+    "url": "https://github.com/staccFoxx/bartholomew.git",
     "directory": "packages/promptsmith-vscode"
   },
   "homepage": "https://bartholomew.info",
@@ -65,13 +65,28 @@
         "icon": "$(lightbulb)"
       },
       {
+        "command": "promptsmith.groundWorkspace",
+        "title": "PromptSmith: Ground Prompt in Active Workspace Stack",
+        "icon": "$(symbol-namespace)"
+      },
+      {
+        "command": "promptsmith.exportWorkspaceRules",
+        "title": "PromptSmith: Generate Workspace Rules (.cursorrules / CLAUDE.md / Copilot / .windsurfrules)",
+        "icon": "$(file-code)"
+      },
+      {
+        "command": "promptsmith.scrubSecrets",
+        "title": "PromptSmith: Scrub Exposed Secrets & API Keys from Prompt",
+        "icon": "$(shield)"
+      },
+      {
         "command": "promptsmith.openDashboard",
         "title": "PromptSmith: Open Mascot Assistant",
         "icon": "$(dashboard)"
       },
       {
         "command": "promptsmith.unlockLicense",
-        "title": "PromptSmith: Activate Developer Pro Passkey ($9/mo)",
+        "title": "PromptSmith: Activate Developer Pro Passkey ($9/mo or $10 Passkey)",
         "icon": "$(key)"
       }
     ],
@@ -133,7 +148,7 @@
     "url": "https://bartholomew.info"
   },
   "bugs": {
-    "url": "https://bartholomew.info/contact",
+    "url": "https://bartholomew.info/contact.html",
     "email": "help@bartholomew.info"
   }
 }

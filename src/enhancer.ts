@@ -145,6 +145,42 @@ export class PromptEnhancer {
     return compiled;
   }
 
+
+  private static resolveSystemRole(domainRule: DomainRule | null, targetRuntime: string): string {
+    if (!domainRule) {
+      return `Frontier Software Architect & Empirical Systems Verifier operating in ${targetRuntime}`;
+    }
+    if (domainRule.domain.includes("Meta-Prompt")) {
+      return `Frontier Prompt Architect & Agent Specification Engineer operating in ${targetRuntime}`;
+    }
+    if (domainRule.category === "science" || domainRule.domain.includes("Physics")) {
+      return `Theoretical & Applied Physicist / Empirical Systems Scientist operating in ${targetRuntime}`;
+    }
+    if (domainRule.domain.includes("Mathematical")) {
+      return `Pure & Applied Mathematician / Formal Logic Verifier operating in ${targetRuntime}`;
+    }
+    if (domainRule.category === "operations" || domainRule.domain.includes("Real-World")) {
+      return `Principal Operations Commander & Crisis Response Strategist operating in ${targetRuntime}`;
+    }
+    if (domainRule.domain.includes("Human Communication")) {
+      return `Master Communicator & Cognitive Scaffolding Strategist operating in ${targetRuntime}`;
+    }
+    if (domainRule.category === "business") {
+      return `Principal Strategy Architect & Quantitative Financial Modeler operating in ${targetRuntime}`;
+    }
+    if (domainRule.category === "legal") {
+      return `Senior Commercial Counsel & Regulatory Compliance Specialist operating in ${targetRuntime}`;
+    }
+    return `Senior Staff Architect & Systems Verifier operating in ${targetRuntime}. Specialization: ${domainRule.domain}`;
+  }
+
+  private static resolveOutputSpec(domainRule: DomainRule | null): string {
+    if (!domainRule) {
+      return "Deliver self-contained, fully resolved technical artifacts followed by an explicit verification test suite.";
+    }
+    return domainRule.recommendedOutputFormat;
+  }
+
   private static stripFiller(text: string): string {
     return text
       .replace(/\b(can you please|could you please|please kindly|i would like you to|i want you to)\b/gi, "")
@@ -158,16 +194,14 @@ export class PromptEnhancer {
   // 1. Universal Precision
   private static enhancePrecision(prompt: string, targetRuntime: string, domainRule: DomainRule | null): string {
     const core = this.stripFiller(prompt);
+    const role = this.resolveSystemRole(domainRule, targetRuntime);
+    const outputFormat = this.resolveOutputSpec(domainRule);
     const domainConstraints = domainRule
       ? domainRule.injectedConstraints.map(c => `- [${domainRule.domain}] ${c}`).join("\n")
       : "";
 
-    const outputFormat = domainRule
-      ? domainRule.recommendedOutputFormat
-      : "Return the solution structured logically: 1. Specification / Root Cause -> 2. Production Code / Artifact -> 3. Step-by-Step Validation Test.";
-
     return `<context>
-You are an expert technical intelligence operating within ${targetRuntime}${domainRule ? ` specializing in ${domainRule.domain}` : ""}. Execute the task with deterministic precision, zero conversational preamble, and complete adherence to provided constraints.
+You are ${role}. Execute the directive with deterministic precision, grounded empirical correctness, and strict adherence to physical, mathematical, and domain constraints.
 </context>
 
 <task>
@@ -176,9 +210,10 @@ ${core}
 
 <constraints>
 - Maintain production-grade correctness with zero unverified assumptions or unstated mock implementations.
-- Provide self-contained, drop-in replacement artifacts with explicit error-handling and boundary edge cases.
-- NEVER include meta-commentary, apology preambles, or conversational transitions before or after the deliverables.
-${domainConstraints ? domainConstraints + "\n" : ""}- Prioritize high token-to-signal clarity and executable syntax.
+- Obey all governing physical conservation laws, mathematical axioms, and operational realities.
+- Provide self-contained, drop-in deliverables with explicit error-handling and boundary edge cases.
+- NEVER include meta-commentary, apology preambles, or conversational transitions before or after deliverables.
+${domainConstraints ? domainConstraints + "\n" : ""}- Test and verify all assertions internally before labeling any solution correct.
 </constraints>
 
 <output_format>
@@ -189,16 +224,22 @@ ${outputFormat}
   // 2. Anthropic Claude 3.7 / 3.5 Sonnet XML
   private static enhanceClaudeXml(prompt: string, targetRuntime: string, domainRule: DomainRule | null): string {
     const core = this.stripFiller(prompt);
+    const role = this.resolveSystemRole(domainRule, targetRuntime);
+    const outputSpec = this.resolveOutputSpec(domainRule);
+    const domainConstraints = domainRule
+      ? domainRule.injectedConstraints.map(c => `  * ${c}`).join("\n")
+      : "";
+
     return `<system_role>
-Frontier Software Architect & Empirical Systems Verifier operating in ${targetRuntime}.
-${domainRule ? `Domain Expertise: ${domainRule.domain}` : ""}
+${role}
 </system_role>
 
 <scratchpad>
 Before outputting deliverables:
-1. Deconstruct the prompt requirements and implicit invariant constraints.
-2. Formulate alternative edge cases and failure modes.
-3. Validate deterministic syntax correctness without placeholders.
+1. Deconstruct the prompt requirements, physical laws, and invariant constraints.
+2. Verify dimensional homogeneity and mathematical consistency.
+3. Formulate edge-case boundary conditions and falsification tests.
+4. Verify all components internally before certifying the solution.
 </scratchpad>
 
 <instructions>
@@ -206,13 +247,13 @@ ${core}
 </instructions>
 
 <rules>
-- Adhere strictly to provided specifications without conversational introductions or summaries.
-- Enclose all production artifacts in clean, delimited syntax blocks.
-- If edge-case ambiguities exist, implement the most resilient industry-standard pattern and document assumptions inline.
+- Adhere strictly to provided specifications without conversational introductions or meta-commentary.
+- Enclose all production deliverables in clean, delimited syntax blocks.
+${domainConstraints ? domainConstraints + "\n" : ""}- If edge-case ambiguities exist, implement the most resilient industry-standard pattern and document invariants.
 </rules>
 
 <output_specification>
-${domainRule ? domainRule.recommendedOutputFormat : "Deliver direct executable source code followed by verification test assertions."}
+${outputSpec}
 </output_specification>`;
   }
 
@@ -222,19 +263,24 @@ ${domainRule ? domainRule.recommendedOutputFormat : "Deliver direct executable s
       .replace(/\b(think step by step|walk through step by step|let's think step by step|explain your reasoning step by step)\b/gi, "")
       .replace(/\s+/g, " ")
       .trim();
+    const role = this.resolveSystemRole(domainRule, targetRuntime);
+    const outputSpec = this.resolveOutputSpec(domainRule);
 
     return `### Problem Specification
 ${core}
 
-### Invariant & Boundary Criteria
-- Target Environment: ${targetRuntime}
-${domainRule ? `- Domain Focus: ${domainRule.domain}` : ""}
-- Deterministic correctness is required across all edge cases (null/empty inputs, concurrency, boundary overflow).
-- Do NOT provide high-level abstractions or pseudo-code; deliver fully implemented, runnable production artifacts.
+### Domain Jurisdiction & Invariants
+- Role Context: ${role}
+${domainRule ? `- Domain: ${domainRule.domain}\n` + domainRule.injectedConstraints.map(c => `  - ${c}`).join("\n") : ""}
+- Invariant Criteria: Deterministic correctness across all physical, mathematical, and operational edge cases.
+- Grounded Execution: Do NOT provide superficial pseudocode or speculative statements; provide fully realized, verified artifacts.
 
-### Formal Acceptance Verification
-- Provide 3 rigorous unit/integration test assertions verifying happy path, boundary threshold, and failure recovery.
-- State asymptotic computational complexity (Time & Space) if applicable.`;
+### Formal Acceptance & Falsification Verification
+- Target Format: ${outputSpec}
+- Provide 3 rigorous verification assertions testing:
+  1. Nominal baseline state.
+  2. Boundary threshold / singularity limit.
+  3. Falsification stress test attempting to break the hypothesis or constraints.`;
   }
 
   // 4. OpenAI GPT-4o / GPT-4.5 Structured Markdown & Schema

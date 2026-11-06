@@ -10,6 +10,7 @@ import { EnhancementProfile } from "./enhancer";
 import { ModelBenchmarkEngine, BenchmarkTarget } from "./benchmarks";
 import { CognitiveAudience } from "./learner";
 import { DisciplinaryLens, OmniEqualizerEngine } from "./equalizer";
+import { PromptWorkspaceToolkit } from "./workspace_skills";
 
 export class PromptWebviewProvider {
   public static getHtml(
@@ -34,6 +35,9 @@ export class PromptWebviewProvider {
     const currentAudience = activeAudience || cognitive.audience;
     const currentDiscipline = activeDiscipline || metrics.discipline;
     const equalizerProf = OmniEqualizerEngine.PROFILES[currentDiscipline] || metrics.equalizer;
+    const wsContext = PromptWorkspaceToolkit.inspectWorkspace();
+    const ambiguities = PromptWorkspaceToolkit.lintAmbiguities(originalPrompt);
+    const costSim = PromptWorkspaceToolkit.simulateMultiTurnSavings(originalPrompt, metrics.tokenSavingsPercent);
 
     let mascotMessage = "Calibrated for maximum reasoning precision: high-density tokens, invariant constraints, and zero conversational fluff.";
     if (currentAudience === "explorer") {
@@ -531,7 +535,7 @@ export class PromptWebviewProvider {
       transform: translateY(-1px);
     }
 
-    /* Passkey Pro Box ($0.99 / week) */
+    /* Passkey Pro Box ($9/mo or $10 Passkey) */
     .pro-box {
       background: rgba(16, 185, 129, 0.04);
       border: 1px solid rgba(16, 185, 129, 0.25);
@@ -734,14 +738,83 @@ export class PromptWebviewProvider {
     </div>
   </div>
 
-  <!-- Real-Time Token & Signal Telemetry Strip -->
-  <div class="telemetry-strip">
-    <span>Token Compression: <span class="telemetry-val" style="color:var(--emerald); font-weight:800;">-${metrics.tokenSavingsPercent}%</span></span>
-    <span>Signal Density: <span class="telemetry-val" style="color:#38bdf8; font-weight:800;">${metrics.iqScore} / 100</span></span>
-    <span>Est. Tokens: <span class="telemetry-val" id="cnt-tokens">0</span></span>
+  <!-- Curated Workspace Grounder & Rules Scrubber -->
+  <div class="panel-box" style="border-color: rgba(16, 185, 129, 0.3);">
+    <div class="panel-header">
+      <span class="panel-label" style="color: var(--emerald);">
+        Workspace Context Grounder &amp; Rules Exporter
+      </span>
+      <span class="badge-pill pill-emerald">${wsContext.workspaceName}</span>
+    </div>
+    <div style="font-size: 9.5px; color: #94a3b8; margin-bottom: 6px;">
+      Active: <b>${wsContext.activeFileRelative}</b> (${wsContext.languageId}) &bull; Stack: <b>${wsContext.detectedStack.slice(0, 4).join(", ") || "Auto"}</b>
+    </div>
+    <div class="button-group">
+      <button class="pill-btn active" onclick="groundWorkspaceNow()" title="Inject verified project stack &amp; active file symbols">+ Ground in Project Stack</button>
+      <button class="pill-btn" onclick="exportRules('.cursorrules')" title="Write compacted .cursorrules to workspace root">Export .cursorrules</button>
+      <button class="pill-btn" onclick="exportRules('CLAUDE.md')" title="Write compacted CLAUDE.md to workspace root">Export CLAUDE.md</button>
+      <button class="pill-btn" onclick="exportRules('.github/copilot-instructions.md')" title="Write compacted .github/copilot-instructions.md">Export Copilot Rules</button>
+      <button class="pill-btn" onclick="exportRules('.windsurfrules')" title="Write compacted .windsurfrules to workspace root">Export .windsurfrules</button>
+    </div>
   </div>
 
-  <!-- View Mode Switcher & Code Editor -->
+  ${secretFindings.length > 0 ? `
+  <!-- Pre-Flight Secret & Credential Leak Guard -->
+  <div class="panel-box" style="border-color: rgba(244, 63, 94, 0.55); background: rgba(244, 63, 94, 0.08);">
+    <div class="panel-header">
+      <span class="panel-label" style="color: #fda4af;">
+        Pre-Flight Secret Guard (${secretFindings.reduce((acc, s) => acc + s.count, 0)} Credential Leak Risk)
+      </span>
+      <button class="mode-btn active" onclick="scrubSecretsNow()" style="background:#e11d48; border-color:#fb7185; font-weight:700;">Scrub Secrets</button>
+    </div>
+    <div style="font-size:9.5px; color:#fecdd3;">
+      Detected: ${secretFindings.map(s => `<b>${s.count}x ${s.label}</b>`).join(', ')}
+    </div>
+  </div>
+  ` : ''}
+
+  ${ambiguities.length > 0 ? `
+  <!-- Pre-Flight Ambiguity & Missing Constraint Linter -->
+  <div class="panel-box" style="border-color: rgba(245, 158, 11, 0.35);">
+    <div class="panel-header">
+      <span class="panel-label" style="color: var(--amber);">
+        Pre-Flight Ambiguity Linter (${ambiguities.length} Detected)
+      </span>
+      <span class="badge-pill" style="background:rgba(245,158,11,0.15); color:var(--amber); border:1px solid rgba(245,158,11,0.3);">1-Click Fix</span>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:4px;">
+      ${ambiguities.map(a => `
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:6px; background:rgba(255,255,255,0.02); padding:4px 6px; border-radius:4px; border:1px solid rgba(255,255,255,0.06);">
+          <span style="font-size:9.5px; color:#e2e8f0;"><b style="color:var(--amber);">[${a.severity}]</b> ${a.label}</span>
+          <button class="mode-btn active" onclick='applyFix(${JSON.stringify(a.fixSnippet)})' style="white-space:nowrap;">+ Inject Guard</button>
+        </div>
+      `).join('')}
+    </div>
+  </div>
+  ` : ''}
+
+  <!-- Real-Time Token & 20-Turn Cost Telemetry Strip -->
+  <div class="telemetry-strip" style="flex-wrap:wrap; gap:6px;">
+    <span>Compression: <span class="telemetry-val" style="color:var(--emerald); font-weight:800;">-${metrics.tokenSavingsPercent}%</span></span>
+    <span>Signal: <span class="telemetry-val" style="color:#38bdf8; font-weight:800;">${metrics.iqScore}/100</span></span>
+    <span>20-Turn Saved: <span class="telemetry-val" style="color:var(--emerald); font-weight:800;">${costSim.cumulativeTokensSaved.toLocaleString()} tok (~$${costSim.openaiO3SavedUsd})</span></span>
+    <span>Tokens: <span class="telemetry-val" id="cnt-tokens">0</span></span>
+  </div>
+
+  <!-- Direct Input Draft Box -->
+  <div class="view-mode-bar">
+    <span class="panel-label" style="font-size: 10px; color: #38bdf8;">
+      Input Draft (Type, Paste, or Select in Editor + Alt+P)
+    </span>
+    <button class="mode-btn active" onclick="optimizeNow()" style="background:linear-gradient(135deg,#0284c7,#0369a1); border-color:#38bdf8; font-weight:700; padding:3px 10px;">
+      Optimize Prompt &rarr;
+    </button>
+  </div>
+  <div class="editor-wrapper" style="margin-bottom: 8px;">
+    <textarea id="input-box" class="prompt-editor" style="min-height: 68px; max-height: 150px;" placeholder="Type or paste your raw prompt here, or highlight text in any code file and press Alt+P...">${(originalPrompt || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</textarea>
+  </div>
+
+  <!-- View Mode Switcher & Compiled Blueprint -->
   <div class="view-mode-bar">
     <span class="panel-label" style="font-size: 10px; color: #fff;">
       Compiled Prompt Blueprint
@@ -753,32 +826,88 @@ export class PromptWebviewProvider {
   </div>
 
   <div class="editor-wrapper">
-    <textarea id="output-box" class="prompt-editor" oninput="updateLiveCounters()">${enhancedPrompt}</textarea>
+    <textarea id="output-box" class="prompt-editor" oninput="updateLiveCounters()" placeholder="Your structured, high-density prompt blueprint will appear here...">${(enhancedPrompt || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</textarea>
     <div id="diff-box" class="diff-viewport"></div>
   </div>
 
   <!-- Action Buttons Row -->
   <div class="action-row">
-    <button class="btn-primary" onclick="applyToEditor()">
-      <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
-      Apply (Alt+P)
+    <button class="btn-primary" onclick="optimizeNow()" title="Compile and structure the Input Draft">
+      Optimize
     </button>
-    <button class="btn-secondary" id="btn-copy" onclick="copyToClipboard()">Copy</button>
-    <button class="btn-secondary" onclick="revertToOriginal()">Revert</button>
+    <button class="btn-secondary" id="btn-copy" onclick="copyToClipboard()" title="Copy Blueprint to Clipboard">Copy</button>
+    <button class="btn-secondary" onclick="applyToEditor()" title="Insert Blueprint into Active Editor">Insert</button>
+    <button class="btn-secondary" onclick="scrubSecretsNow()" title="Redact exposed API keys, tokens, and passwords">Scrub</button>
   </div>
 
-  <!-- Pro Passkey ($0.99 / week) -->
+  ${historyVault.length > 0 ? `
+  <!-- Local Recent Prompts Vault -->
+  <div class="panel-box" style="border-color: rgba(56, 189, 248, 0.22);">
+    <div class="panel-header">
+      <span class="panel-label" style="color: #94a3b8;">
+        Recent Prompts Vault (${historyVault.length})
+      </span>
+      <button class="pill-btn" onclick="clearHistoryVault()" style="font-size:8.5px; padding:1px 6px;">Clear</button>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:4px; max-height:95px; overflow-y:auto;">
+      ${historyVault.map((h, idx) => `
+        <div onclick="loadHistoryItem(${idx})" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center; gap:6px; padding:4px 6px; border-radius:4px; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.05);">
+          <span style="font-size:9.5px; color:#cbd5e1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:190px;">${h.raw.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</span>
+          <span style="font-size:8.5px; color:#38bdf8; font-family:var(--font-mono); text-transform:uppercase;">${h.target}</span>
+        </div>
+      `).join('')}
+    </div>
+  </div>
+  ` : ''}
+
+  <!-- Pro Passkey ($9/mo or $10 Passkey) -->
   <div class="pro-box">
     <div>
-      <div class="pro-title">PromptSmith Pro ($0.99 / wk)</div>
-      <div class="pro-meta">Unlimited offline optimizations &amp; multi-model benchmarks.</div>
+      <div class="pro-title">PromptSmith Pro ($9/mo or $10 Passkey)</div>
+      <div class="pro-meta">Unlimited offline optimizations &amp; 19-target benchmarks.</div>
     </div>
-    ${!isLicensed ? `<button class="btn-sub" onclick="openCheckout()">Unlock ($0.99)</button>` : '<span style="color:var(--emerald); font-weight:800; font-family:var(--font-mono); font-size:10px;">ACTIVE PRO PASSKEY</span>'}
+    ${!isLicensed ? `<div style="display:flex; gap:5px;"><button class="btn-sub" onclick="openCheckout()">Get Passkey</button><button class="btn-secondary" style="padding:4px 8px; font-size:9.5px;" onclick="enterPasskey()">Enter Key</button></div>` : '<span style="color:var(--emerald); font-weight:800; font-family:var(--font-mono); font-size:10px;">ACTIVE PRO PASSKEY</span>'}
   </div>
 
   <script>
     const vscode = acquireVsCodeApi();
     const originalText = ${JSON.stringify(originalPrompt)};
+
+    function getDraftText() {
+      const inp = document.getElementById('input-box');
+      const out = document.getElementById('output-box');
+      return (inp && inp.value.trim()) ? inp.value.trim() : ((out && out.value.trim()) ? out.value.trim() : '');
+    }
+
+    function optimizeNow() {
+      const text = getDraftText();
+      vscode.postMessage({ command: "optimizeInput", text });
+    }
+
+    function groundWorkspaceNow() {
+      vscode.postMessage({ command: "groundWorkspace", text: getDraftText() });
+    }
+
+    function exportRules(targetFile) {
+      const compiled = document.getElementById("output-box").value || "";
+      vscode.postMessage({ command: "exportRulesFile", targetFile, text: getDraftText(), compiled });
+    }
+
+    function applyFix(fixSnippet) {
+      vscode.postMessage({ command: "applyAmbiguityFix", fixSnippet, text: getDraftText() });
+    }
+
+    function scrubSecretsNow() {
+      vscode.postMessage({ command: "scrubSecrets", text: getDraftText() });
+    }
+
+    function loadHistoryItem(index) {
+      vscode.postMessage({ command: "loadHistoryItem", index });
+    }
+
+    function clearHistoryVault() {
+      vscode.postMessage({ command: "clearHistoryVault", text: getDraftText() });
+    }
 
     function switchCategory(cat) {
       document.querySelectorAll('.cat-tab-btn').forEach(b => b.classList.remove('active'));
@@ -820,10 +949,9 @@ export class PromptWebviewProvider {
 
     function renderInteractiveDiff() {
       const diffBox = document.getElementById('diff-box');
-      const orig = originalText || "";
+      const orig = getDraftText() || originalText || "";
       const enh = document.getElementById('output-box').value || "";
 
-      // Quick visual diff
       let html = '<div style="margin-bottom:8px; font-weight:700; color:#38bdf8;">[INTERACTIVE RECONSTRUCTION LOG]</div>';
       html += '<div style="margin-bottom:6px;"><span class="diff-del">Original (' + orig.length + ' chars)</span> &rarr; <span class="diff-add">PromptSmith Enhanced (' + enh.length + ' chars)</span></div>';
       html += '<div style="padding:6px; background:rgba(255,255,255,0.02); border-radius:4px; border:1px solid rgba(255,255,255,0.06); white-space:pre-wrap;">' + enh.replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</div>';
@@ -838,52 +966,44 @@ export class PromptWebviewProvider {
       else if (type === 'root-cause') t = "Perform root cause analysis on an intermittent deadlock occurring during simultaneous SQLite WAL checkpointing and IPC reads.";
       else if (type === 'age-10') t = "Explain quantum entanglement using an intuitive analogy with paired magical walkie-talkies that anyone can understand.";
 
-      document.getElementById('output-box').value = t;
-      updateLiveCounters();
-      vscode.postMessage({ command: "changeProfile", profile: "claude_xml" });
+      document.getElementById('input-box').value = t;
+      vscode.postMessage({ command: "optimizeInput", text: t });
     }
 
     function triggerBrainstorm() {
-      vscode.postMessage({ command: "triggerBrainstorm" });
+      vscode.postMessage({ command: "triggerBrainstorm", text: getDraftText() });
     }
 
     function selectVector(vectorId) {
-      vscode.postMessage({ command: "selectVector", vectorId });
+      vscode.postMessage({ command: "selectVector", vectorId, text: getDraftText() });
     }
 
     function setDiscipline(discipline) {
-      vscode.postMessage({ command: "changeDiscipline", discipline });
+      vscode.postMessage({ command: "changeDiscipline", discipline, text: getDraftText() });
     }
 
     function setAudience(audience) {
-      vscode.postMessage({ command: "changeAudience", audience });
+      vscode.postMessage({ command: "changeAudience", audience, text: getDraftText() });
     }
 
     function updateLiveCounters() {
-      const text = document.getElementById("output-box").value || "";
+      const text = document.getElementById("output-box").value || getDraftText() || "";
       const words = text.trim() ? text.trim().split(/\s+/).length : 0;
       const tokens = Math.ceil(words * 1.33);
       document.getElementById("cnt-tokens").textContent = tokens;
     }
 
-    function revertToOriginal() {
-      if (originalText) {
-        document.getElementById("output-box").value = originalText;
-        updateLiveCounters();
-      }
-    }
-
     function selectTarget(profile) {
-      vscode.postMessage({ command: "changeProfile", profile });
+      vscode.postMessage({ command: "changeProfile", profile, text: getDraftText() });
     }
 
     function applyToEditor() {
-      const text = document.getElementById("output-box").value;
+      const text = document.getElementById("output-box").value || getDraftText();
       vscode.postMessage({ command: "insert", text });
     }
 
     function copyToClipboard() {
-      const text = document.getElementById("output-box").value;
+      const text = document.getElementById("output-box").value || getDraftText();
       vscode.postMessage({ command: "copy", text });
       const btn = document.getElementById("btn-copy");
       if (btn) {
@@ -894,6 +1014,10 @@ export class PromptWebviewProvider {
 
     function openCheckout() {
       vscode.postMessage({ command: "openCheckout" });
+    }
+
+    function enterPasskey() {
+      vscode.postMessage({ command: "enterPasskey" });
     }
 
     // Draggable Mascot Handler

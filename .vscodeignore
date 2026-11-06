@@ -8,3 +8,5 @@ node_modules/**
 .git/**
 .gitignore
 media/icon_base64.txt
+media/mascot_clean_b64.txt
+PROMPTSMITH_COMMUNITY_LAUNCH_KIT.md

@@ -317,6 +317,82 @@ export class KnowledgeBase {
         "Does the proposal provide immediate demonstrable ROI?",
         "Is the call to action binary, actionable, and low-friction?"
       ]
+    },
+
+    // 17. Meta-Prompt Engineering & System Prompt Architecture
+    {
+      domain: "Meta-Prompt Engineering & Frontier System Instructions",
+      category: "engineering",
+      matchPattern: /\b(write a prompt|create a prompt|build a prompt|design a prompt|give me a prompt|prompt for|prompt that can|prompt to help|system prompt|how should i prompt|how do i prompt|better prompt|prompt looking for|craft a prompt|prompt template|agent prompt|meta-prompt)\b/i,
+      injectedConstraints: [
+        "Output MUST be an executable, production-grade system prompt or meta-prompt architecture with delimited XML/Markdown blocks.",
+        "Include explicit system persona, invariant constraints, negative constraints (anti-patterns to reject), input schemas, and few-shot exemplars.",
+        "Provide a self-verification checklist so the target AI model tests and verifies its output before returning it.",
+        "NEVER generate generic software code when the user is explicitly requesting a prompt or prompt optimization."
+      ],
+      recommendedOutputFormat: "Production System Prompt Architecture: <system_role>, <context>, <invariants>, <negative_constraints>, <input_schema>, <few_shot_examples>, <verification_rubric>.",
+      reasoningChecklist: [
+        "Does the synthesized prompt clearly establish the AI's persona, boundaries, and objective?",
+        "Are edge cases and anti-hallucination guardrails explicitly defined?",
+        "Is the output format strictly specified with verification assertions?"
+      ]
+    },
+
+    // 18. Laws of Physics, Thermodynamics & Dimensional Mechanics
+    {
+      domain: "Laws of Physics, Thermodynamics & Dimensional Mechanics",
+      category: "science",
+      matchPattern: /\b(physics|thermodynamic|entropy|navier-stokes|quantum|maxwell|relativity|conservation of|gravity|mass-energy|joule|watt|kelvin|newton|pascal|momentum|dimensional analysis|buckingham|fluid dynamics|lorentz|doppler|speed of light)\b/i,
+      injectedConstraints: [
+        "Enforce fundamental physical conservation laws: conservation of mass, momentum, energy (Delta U = Q - W), and entropy non-decrease (dS >= 0).",
+        "Verify dimensional homogeneity via Buckingham Pi theorem; ensure all physical quantities possess consistent SI base units ([M], [L], [T], [I], [Theta], [N], [J]).",
+        "Analyze limiting asymptotic boundary cases (e.g., non-relativistic limit v << c, Knudsen number Kn -> 0, zero-temperature ground states T -> 0).",
+        "Include explicit physical falsification criteria to stress-test any derived equation or claim against empirical reality."
+      ],
+      recommendedOutputFormat: "Rigorous Physical Derivation & Analysis: 1. Physical Axioms & Invariants -> 2. Dimensional Homogeneity Proof -> 3. Mathematical Formulation -> 4. Asymptotic Boundary Verification & Falsification Suite.",
+      reasoningChecklist: [
+        "Are units and physical dimensions strictly consistent on both sides of every equation?",
+        "Does the system obey the Second Law of Thermodynamics and causality?",
+        "Are boundary limits (e.g., v -> c, T -> 0, scale extremes) physically coherent?"
+      ]
+    },
+
+    // 19. Real-World Situations, Crisis Management & Operations
+    {
+      domain: "Real-World Situations, Crisis Management & Operations",
+      category: "operations",
+      matchPattern: /\b(real life|real-life|situation|crisis|emergency|operations|logistics|supply chain|hospital|shutdown|authorities|disaster|incident response|escalation|factory|plant)\b/i,
+      injectedConstraints: [
+        "Ground decisions in real-world human cognitive capacity, logistical bottlenecks, and physical resource availability.",
+        "Establish explicit crisis triage levels, communication chains of command, and fail-safe recovery procedures.",
+        "Eliminate panic-inducing ambiguity; provide clear, actionable directives with contingency decision trees.",
+        "Clearly delineate between verified empirical facts, probabilistic inferences, and unknown operational parameters."
+      ],
+      recommendedOutputFormat: "Actionable Operational Playbook: 1. Situation Assessment & Triage -> 2. Immediate Containment Directives -> 3. Stakeholder Communication Protocol -> 4. Recovery & Verification Checklist.",
+      reasoningChecklist: [
+        "Does the protocol minimize operational downtime and prioritize human safety?",
+        "Are communication directives clear, unambiguous, and panic-free?",
+        "Is there a validated secondary fallback if primary communications or power rails fail?"
+      ]
+    },
+
+    // 20. Human Communication Dynamics & Cognitive Calibration
+    {
+      domain: "Human Communication Dynamics, Cognitive Calibration & Rhetoric",
+      category: "creative",
+      matchPattern: /\b(communication style|tone|pedagogical|explain to|all ages|high school|graduate|socratic|audience|rhetoric|dialogue|interpersonal|diplomacy|calmly|negotiation|empathy|clarity)\b/i,
+      injectedConstraints: [
+        "Dynamically calibrate cognitive load and terminology to the target audience (e.g., intuitive analogies for novices, rigorous formalisms for researchers).",
+        "Preserve 100% conceptual and technical precision across all communication styles; never simplify facts to the point of falsehood.",
+        "Structure explanations with Socratic scaffolding: establish intuition first, introduce formal definitions, and verify understanding with interactive questions.",
+        "Account for emotional resonance, psychological safety, and clear actionable takeaways."
+      ],
+      recommendedOutputFormat: "Calibrated Communication Architecture: 1. Core Message / Intuitive Hook -> 2. In-Depth Multi-Perspective Breakdown -> 3. Common Misconceptions Addressed -> 4. Comprehension Verification Checks.",
+      reasoningChecklist: [
+        "Is the tone tailored to the intended audience without being condescending or overly dense?",
+        "Is technical accuracy maintained while improving accessibility?",
+        "Are verification questions provided to confirm recipient understanding?"
+      ]
     }
   ];
 
