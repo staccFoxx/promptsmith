@@ -200,6 +200,20 @@ export function activate(context: vscode.ExtensionContext) {
             vscode.window.showInformationMessage(`PromptSmith: Injected workspace stack & symbols from ${ground.workspaceName}.`);
           }
           break;
+        case "groundDiagnostics":
+          {
+            ensureActivePrompt(data.text);
+            const diag = PromptWorkspaceToolkit.inspectDiagnosticsAndDiff();
+            lastPrompt = lastPrompt ? `${lastPrompt}\n\n${diag.block}` : diag.block;
+            lastMetrics = PromptAnalyzer.analyze(lastPrompt, targetRuntime);
+            lastEnhanced = PromptEnhancer.enhance(lastPrompt, activeProfile, targetRuntime, activeAudience, activeDiscipline);
+            if (autoHookEnabled && lastEnhanced) {
+              await vscode.env.clipboard.writeText(lastEnhanced);
+            }
+            broadcastViewUpdate();
+            vscode.window.showInformationMessage(`PromptSmith Error-to-Spec: Grounded ${diag.count} active IDE diagnostic(s) into blueprint.`);
+          }
+          break;
         case "exportRulesFile":
           {
             ensureActivePrompt(data.text);
@@ -716,7 +730,18 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.window.showInformationMessage(`PromptSmith: Grounded in ${ground.workspaceName} (${ground.detectedStack.join(", ") || ground.languageId}).`);
   });
 
-  context.subscriptions.push(scrubSecretsCmd, cleanVoiceCmd, groundWorkspaceCmd);
+  const groundDiagnosticsCmd = vscode.commands.registerCommand("promptsmith.groundDiagnostics", async () => {
+    const diag = PromptWorkspaceToolkit.inspectDiagnosticsAndDiff();
+    lastPrompt = lastPrompt ? `${lastPrompt}\n\n${diag.block}` : diag.block;
+    lastMetrics = PromptAnalyzer.analyze(lastPrompt, targetRuntime);
+    lastEnhanced = PromptEnhancer.enhance(lastPrompt, activeProfile, targetRuntime, activeAudience, activeDiscipline);
+    if (autoHookEnabled && lastEnhanced) {
+      await vscode.env.clipboard.writeText(lastEnhanced);
+    }
+    broadcastViewUpdate();
+    vscode.window.showInformationMessage(`PromptSmith Error-to-Spec: Grounded ${diag.count} active IDE diagnostic(s) & copied blueprint.`);
+  });
+  context.subscriptions.push(scrubSecretsCmd, cleanVoiceCmd, groundWorkspaceCmd, groundDiagnosticsCmd);
   context.subscriptions.push(improveCmd, brainstormCmd, openDashboardCmd, unlockCmd, exportRulesCmd);
 }
 

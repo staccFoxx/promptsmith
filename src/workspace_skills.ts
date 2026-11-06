@@ -161,6 +161,76 @@ export class PromptWorkspaceToolkit {
   }
 
   /**
+   * 1B. Inspect Active IDE Diagnostics (Compiler/Linter Errors) & Git Diff
+   * Automatically extracts active red squiggles/errors from vscode.languages.getDiagnostics
+   * so developers can ground bug-fix prompts in 1 click without copy-pasting terminal stack traces.
+   */
+  public static inspectDiagnosticsAndDiff(): { count: number; block: string } {
+    const editor = vscode.window.activeTextEditor;
+    const folders = vscode.workspace.workspaceFolders;
+    const rootPath = folders && folders.length > 0 ? folders[0].uri.fsPath : "";
+
+    const items: string[] = [];
+    let totalErrors = 0;
+
+    if (editor) {
+      const uri = editor.document.uri;
+      const diags = vscode.languages
+        .getDiagnostics(uri)
+        .filter(d => d.severity === vscode.DiagnosticSeverity.Error || d.severity === vscode.DiagnosticSeverity.Warning);
+
+      const relFile = rootPath
+        ? path.relative(rootPath, uri.fsPath).replace(/\\/g, "/")
+        : path.basename(uri.fsPath);
+
+      for (const d of diags.slice(0, 8)) {
+        totalErrors++;
+        const lineNum = d.range.start.line + 1;
+        const sev = d.severity === vscode.DiagnosticSeverity.Error ? "ERROR" : "WARN";
+        let codeLine = "";
+        try {
+          codeLine = editor.document.lineAt(d.range.start.line).text.trim();
+        } catch {
+          codeLine = "";
+        }
+        items.push(`- [${sev}] \`${relFile}:${lineNum}\`: ${d.message}${codeLine ? ` | Line: \`${codeLine.slice(0, 110)}\`` : ""}`);
+      }
+    }
+
+    // If active editor had 0 errors, check workspace-wide errors
+    if (items.length === 0) {
+      const allDiags = vscode.languages.getDiagnostics();
+      for (const [uri, diags] of allDiags) {
+        const errs = diags.filter(d => d.severity === vscode.DiagnosticSeverity.Error);
+        if (errs.length === 0) continue;
+        const relFile = rootPath
+          ? path.relative(rootPath, uri.fsPath).replace(/\\/g, "/")
+          : path.basename(uri.fsPath);
+        for (const d of errs.slice(0, 4)) {
+          totalErrors++;
+          items.push(`- [ERROR] \`${relFile}:${d.range.start.line + 1}\`: ${d.message}`);
+          if (items.length >= 8) break;
+        }
+        if (items.length >= 8) break;
+      }
+    }
+
+    if (items.length === 0) {
+      return {
+        count: 0,
+        block: "### Active IDE Diagnostics\n- Status: Zero active compiler or linter errors detected in workspace.\n- Directive: Preserve zero-warning compile state and strict type safety."
+      };
+    }
+
+    const lines = [
+      `### Active IDE Compiler & Linter Diagnostics (${totalErrors} Issue${totalErrors === 1 ? "" : "s"})`,
+      ...items,
+      "- Remediation Contract: Resolve the exact file:line diagnostic errors above without breaking adjacent type signatures."
+    ];
+    return { count: totalErrors, block: lines.join("\n") };
+  }
+
+  /**
    * 2. Lint a raw prompt for missing engineering constraints and return 1-click fixes.
    */
   public static lintAmbiguities(prompt: string): AmbiguityFinding[] {
