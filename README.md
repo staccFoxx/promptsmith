@@ -2,15 +2,16 @@
   <img src="https://bartholomew.info/assets/promptsmith_mascot.png" width="140" height="140" alt="PromptSmith Mascot" />
 </p>
 
-<h1 align="center">PromptSmith</h1>
+<h1 align="center">PromptSmith (v2.4.2)</h1>
 
 <p align="center">
-  <strong>Maximizes performance, reasoning accuracy, and token efficiency for frontier AI models across VS Code, Cursor, Windsurf, and Claude Code.</strong>
+  <strong>Zero-Clutter Model Auto-Hook, Voice-to-Spec Dictation Refiner, Live Compiler Error Grounding, and Deterministic Prompt Optimizer for Cursor, Windsurf, Claude Code, Copilot, and VS Code.</strong>
 </p>
 
 <p align="center">
-  <a href="https://open-vsx.org/extension/bartholomew/promptsmith-ai"><img src="https://img.shields.io/badge/Open--VSX-v2.3.2-blue.svg?style=flat-square" alt="Open-VSX" /></a>
-  <a href="https://bartholomew.info/promptsmith"><img src="https://img.shields.io/badge/Web_Studio-Live-gold.svg?style=flat-square" alt="Web Studio" /></a>
+  <a href="https://open-vsx.org/extension/bartholomew/promptsmith-ai"><img src="https://img.shields.io/badge/Open--VSX-v2.4.2-blue.svg?style=flat-square" alt="Open-VSX" /></a>
+  <a href="https://bartholomew.info/promptsmith.html"><img src="https://img.shields.io/badge/Web_Studio-Live-gold.svg?style=flat-square" alt="Web Studio" /></a>
+  <a href="https://bartholomew.info/demo.html"><img src="https://img.shields.io/badge/Interactive_Demo-45s_Walkthrough-cyan.svg?style=flat-square" alt="Interactive Demo" /></a>
   <a href="https://bartholomew.info/checkout/promptsmith"><img src="https://img.shields.io/badge/Passkey-$9/mo_or_$10-success.svg?style=flat-square" alt="Stripe Passkey" /></a>
   <a href="LICENSE.md"><img src="https://img.shields.io/badge/License-MIT-green.svg?style=flat-square" alt="License" /></a>
 </p>
@@ -19,63 +20,52 @@
 
 ## Overview
 
-PromptSmith is an intelligent prompt structuring engine and in-editor companion designed to maximize the performance, reasoning accuracy, and token efficiency of frontier AI models.
+PromptSmith is an in-editor prompt structuring engine, voice-to-spec compiler, and workspace companion designed to maximize the first-pass accuracy and token efficiency of frontier AI models.
 
-When developers write raw prompts in natural conversational English, models spend high-priority self-attention capacity deciphering conversational filler rather than focusing on core algorithmic logic. PromptSmith decomposes everyday instructions into mathematically rigorous, high-density prompts tailored to the specific attention architecture of **Anthropic Claude 3.7 / 3.5 Sonnet**, **OpenAI o3 / o1**, **ChatGPT-4o**, **Google Gemini 2.0**, **DeepSeek R1**, and autonomous coding agents (**Cursor Composer**, **Windsurf Cascade**, **Claude Code**, **Aider**, **Cline**).
-
----
-
-## Visual Demonstration & How It Works
-
-PromptSmith operates directly inside your editor sidebar or floating panel. Either type/paste a draft into the **Input Draft** box and click **Optimize Prompt**, or highlight any draft text in a code editor and press `Alt+P` (or `Cmd+Alt+P` on macOS).
-
-<p align="center">
-  <img src="https://bartholomew.info/assets/promptsmith_screenshot.png" width="100%" alt="PromptSmith Before and After Optimization and Model Benchmark Matrix" />
-</p>
-
-### The Draggable Mascot Companion
-
-PromptSmith includes a non-intrusive, floating screen companion cut out with zero background framing. You can drag the mascot header inside the studio or click the status bar sparkle icon to open the companion beside your active code editor.
-
-<p align="center">
-  <img src="https://bartholomew.info/assets/promptsmith_companion_screen.png" width="100%" alt="PromptSmith Draggable Screen Mascot in VS Code" />
-</p>
+When developers write raw prompts or dictate spoken thoughts, models spend self-attention capacity deciphering conversational filler, mid-sentence self-corrections, or ungrounded error references. PromptSmith compiles raw drafts or voice streams into structured, high-density specifications tailored to **Anthropic Claude 3.7 / 3.5 Sonnet**, **OpenAI o3 / o1**, **GPT-4o**, **Google Gemini 2.0**, **DeepSeek R1**, and coding agents (**Cursor Composer**, **Windsurf Cascade**, **Claude Code**, **GitHub Copilot**, **Cline**).
 
 ---
 
-## How Users Benefit
+## Key Capabilities in v2.4.2
 
-1. **Instant First-Pass Accuracy**
-   - Eliminates the frustrating cycle of re-prompting models 3 to 5 times. By injecting explicit boundary conditions, typing constraints, and expected outputs, models return production-ready code on the first completion.
+### 1. Zero-Clutter Model Auto-Hook Bridge (`detectActiveModelHook`)
+PromptSmith automatically detects which AI environment you are running inside (**Cursor**, **Windsurf**, **Antigravity**, **Claude Code**, **GitHub Copilot**, or **Cline**) on startup. When **Auto-Hook Active Model** is enabled, every optimized prompt is automatically copied to your clipboard and synced to your active model's native instruction file without cluttering your editor.
 
-2. **25% to 45% Token Cost Reduction**
-   - Conversational filler words like "could you please", "basically", and "write me a function that" are stripped out. In multi-turn agentic workflows, trimming these tokens saves significant API costs.
+### 2. Voice-to-Spec Dictation & Spoken-Thought Refiner (`compileVoiceTranscript`)
+Built for developers who use voice dictation (Web Speech API, Windows `Win+H`, macOS Dictation, Wispr Flow, or Superwhisper):
+- **Mid-Sentence Self-Correction Resolution**: Automatically resolves spoken backtracking such as `"use Express, no wait actually use FastAPI"` into `"use FastAPI"`.
+- **Spoken Syntax & Casing Formatting**: Converts `"snake case user id"` to `user_id`, `"camel case fetch token"` to `fetchToken`, `"dot env"` to `.env`, and `"fat arrow"` to `=>`.
+- **Spoken Command Detection**: Trailing voice commands like `"PromptSmith optimize for Claude"` automatically switch the target profile and compile.
 
-3. **Direct Sidebar Input or Editor Selection**
-   - Type or paste any prompt directly in the PromptSmith sidebar and click **Optimize Prompt**, or highlight text in an active file and press `Alt+P`.
+### 3. Live IDE Compiler & Linter Error Grounding (`+ Ground Errors`)
+Pulls active red squiggles (`vscode.languages.getDiagnostics()` across open files) plus your active `git diff --stat` summary directly into your prompt specification so your AI model fixes the exact line and compiler error on the first turn.
 
-4. **Universal Domain Intelligence (16 Core Disciplines)**
-   - Automatically adapts prompts across Systems Programming, Frontend Development, Machine Learning, Database Architecture, DevOps, Security Auditing, Quantitative Finance, Legal Compliance, Healthcare, and Technical Writing.
+### 4. Pre-Flight Secret Scrubber
+Scans your draft in real time for exposed OpenAI, Anthropic, Stripe, GitHub (`ghp_...`), Google Cloud (`AIza...`), AWS (`AKIA...`), and PEM private keys—letting you redact them in one click before they ever reach a third-party model API.
 
-5. **Frontier Model & Bot Benchmark Matrix (19 Targets)**
-   - Real-time scoring showing how well your prompt aligns with the architectural requirements of 8 Frontier Models, 7 Coding Bots, and 4 Next-Gen AI targets before you submit your request.
+### 5. 1-Click Agent Rule Exporter
+Export any compiled blueprint directly to `.cursorrules`, `.windsurfrules`, `CLAUDE.md`, or `.github/copilot-instructions.md`.
+
+### 6. Dual-Pose Gentleman Companion
+Includes an interactive, non-intrusive Gentleman companion in the HUD that strolls in a **90-degree side-profile with his white-gloved hands clasped behind his back**, pauses to tip his top hat and salute when hovered, and turns front-facing to strike his gold `>_` hammer when compiling a prompt.
+
+<p align="center">
+  <img src="https://bartholomew.info/assets/promptsmith_screenshot.png" width="100%" alt="PromptSmith Studio and Model Benchmark Matrix" />
+</p>
 
 ---
 
 ## Quick Start
 
-1. Install the extension from the Open VSX Registry or `.vsix` package.
-2. Open the **PromptSmith** sidebar from the Activity Bar, or press `Alt+Shift+P` (`Cmd+Shift+P` on macOS) to open the Mascot Assistant panel.
-3. Type a raw prompt into the **Input Draft** box and click **Optimize Prompt**, or highlight text in any file and press `Alt+P`.
-4. Select any target model or coding bot card to re-compile your prompt for that model's exact formatting schema.
-5. Click **Copy** or **Insert** to use your structured prompt.
+1. Install the extension from the Open VSX Registry, VS Code Marketplace, or `.vsix` package.
+2. Open the **PromptSmith** sidebar from the Activity Bar, or press `Alt+Shift+P` (`Cmd+Shift+P` on macOS).
+3. Type or dictate a thought into the **Input Draft** box, click **+ Ground Workspace** or **+ Ground Errors** if desired, and click **Optimize**.
+4. Export to `.cursorrules` / `CLAUDE.md` / `.github/copilot-instructions.md` or paste directly into your AI chat.
 
 ---
 
 ## License & Passkey Unlock
 
-PromptSmith includes 10 free prompt optimizations out of the box. Unlimited offline optimizations and multi-model benchmarking can be unlocked with a **Developer Pro** subscription (**$9 / month**) or a **$10 One-Time Passkey** via Stripe at [bartholomew.info/checkout/promptsmith](https://bartholomew.info/checkout/promptsmith).
-
-After checkout, click **Activate in VS Code / Cursor** on the confirmation page, or click **Enter Key** directly inside the PromptSmith sidebar and paste your `PSMITH-PRO-...` passkey or Stripe Session ID.
+PromptSmith includes **10 free in-editor optimizations** out of the box. Unlimited offline optimizations and multi-model benchmarking can be unlocked with a **Developer Pro** subscription (**$9 / month**) or a **$10 One-Time Passkey** via Stripe at [bartholomew.info/checkout/promptsmith](https://bartholomew.info/checkout/promptsmith).
 
 Licensed under the MIT License. Maintained by [Bartholomew](https://bartholomew.info).
