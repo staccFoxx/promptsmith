@@ -11,6 +11,7 @@ import { DisciplinaryLens } from "./equalizer";
 import { OrthogonalPathfinder } from "./orthogonal";
 import { PromptWorkspaceToolkit } from "./workspace_skills";
 import { PromptWebviewProvider } from "./webview";
+import { PromptSmithDashboardPanel } from "./promptsmith_dashboard_panel";
 import { PromptSmithTelemetry } from "./telemetry";
 import * as https from "https";
 
@@ -621,26 +622,15 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.window.showInformationMessage("PromptSmith: Autonomous Lateral Brainstorming Active.");
   });
 
-  // Command: Open Dashboard / Mascot Assistant
+  // Command: Open Dashboard / Mascot Assistant & Optimization Playground
   const openDashboardCmd = vscode.commands.registerCommand("promptsmith.openDashboard", () => {
-    openMascotPanel();
-
-    PromptSmithTelemetry.trackEvent(context, {
-      sessionId,
-      runtime: targetRuntime,
-      action: "improve",
-      profile: activeProfile,
-      audience: activeAudience,
-      discipline: activeDiscipline,
-      inputPrompt: lastPrompt,
-      enhancedPrompt: lastEnhanced,
-      originalWords: lastPrompt ? lastPrompt.split(/\s+/).filter(Boolean).length : 0,
-      enhancedWords: lastEnhanced ? lastEnhanced.split(/\s+/).filter(Boolean).length : 0,
-      tokenReductionPct: lastMetrics.tokenSavingsPercent,
-      isLicensed,
-      trialCountRemaining: trialCount
-    });
+    PromptSmithDashboardPanel.createOrShow(context.extensionUri);
   });
+  context.subscriptions.push(
+    vscode.commands.registerCommand("promptsmith.openPlayground", () => {
+      PromptSmithDashboardPanel.createOrShow(context.extensionUri);
+    })
+  );
 
   // Command: Unlock License Passkey ($9/mo or $10 Passkey)
   const unlockCmd = vscode.commands.registerCommand("promptsmith.unlockLicense", async () => {

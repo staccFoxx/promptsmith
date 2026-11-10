@@ -2,7 +2,7 @@
   "name": "promptsmith-ai",
   "displayName": "PromptSmith - Prompt Companion & Optimizer",
   "description": "Maximizes performance, reasoning accuracy, and token efficiency for frontier AI models.",
-  "version": "2.4.4",
+  "version": "2.5.0",
   "publisher": "bartholomew",
   "icon": "icon.png",
   "license": "MIT",
@@ -90,9 +90,14 @@
         "icon": "$(shield)"
       },
       {
+        "command": "promptsmith.openPlayground",
+        "title": "PromptSmith: Open Prompt Engineering Playground (Pro Tab)",
+        "icon": "$(sparkle)"
+      },
+      {
         "command": "promptsmith.openDashboard",
-        "title": "PromptSmith: Open Mascot Assistant",
-        "icon": "$(dashboard)"
+        "title": "PromptSmith: Open Prompt Engineering Playground (Pro Tab)",
+        "icon": "$(sparkle)"
       },
       {
         "command": "promptsmith.unlockLicense",
