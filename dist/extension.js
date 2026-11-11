@@ -98,7 +98,37 @@ ${n?n+`
 
 <output_format>
 ${r}
-</output_format>`}static enhanceClaudeXml(i,t,e){let o=this.stripFiller(i),a=this.resolveSystemRole(e,t),r=this.resolveOutputSpec(e),n=e?e.injectedConstraints.map(c=>`  * ${c}`).join(`
+</output_format>`}static enhanceClaudeExtendedThinking(i,t,e){let o=this.stripFiller(i),a=this.resolveSystemRole(e,t),r=this.resolveOutputSpec(e);return`<system_role>
+${a}
+</system_role>
+
+<thinking_protocol>
+Allocate dedicated internal thinking tokens to explore this problem systematically:
+1. Deconstruct requirements, invariants, and hidden edge cases.
+2. Formulate multiple candidate approaches and evaluate algorithmic trade-offs (space/time complexity, reliability).
+3. Actively stress-test the chosen solution against adversarial boundary inputs before writing code.
+4. Verify every single dependency, import, and interface contract.
+</thinking_protocol>
+
+<directive>
+${o}
+</directive>
+
+<output_deliverable>
+${r}
+</output_deliverable>`}static enhanceOpenAiO3Effort(i,t,e){let o=this.stripFiller(i),a=this.resolveOutputSpec(e);return`[REASONING_EFFORT: HIGH]
+[TARGET_RUNTIME: ${t}]
+
+GOAL:
+${o}
+
+INVARIANT CONSTRAINTS:
+1. Conduct extensive first-principles reasoning before emitting final code or artifacts.
+2. Produce zero unverified assumptions; resolve all mathematical, logical, and typing requirements end-to-end.
+3. Test edge-case inputs (null values, concurrency bounds, precision limits).
+
+DELIVERABLE FORMAT:
+${a}`}static enhanceClaudeXml(i,t,e){let o=this.stripFiller(i),a=this.resolveSystemRole(e,t),r=this.resolveOutputSpec(e),n=e?e.injectedConstraints.map(c=>`  * ${c}`).join(`
 `):"";return`<system_role>
 ${a}
 </system_role>

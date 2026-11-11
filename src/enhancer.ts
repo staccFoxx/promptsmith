@@ -15,6 +15,8 @@ import { PreemptiveFutureEngine } from "./preemptive";
 export type EnhancementProfile =
   | "precision"
   | "claude_xml"
+  | "claude_thinking"
+  | "o3_reasoning"
   | "openai_o"
   | "gpt4o_schema"
   | "gemini_context"
@@ -219,6 +221,54 @@ ${domainConstraints ? domainConstraints + "\n" : ""}- Test and verify all assert
 <output_format>
 ${outputFormat}
 </output_format>`;
+  }
+
+
+  // Claude Extended Thinking & Deep Scratchpad Calibration
+  private static enhanceClaudeExtendedThinking(prompt: string, targetRuntime: string, domainRule: DomainRule | null): string {
+    const core = this.stripFiller(prompt);
+    const role = this.resolveSystemRole(domainRule, targetRuntime);
+    const outputSpec = this.resolveOutputSpec(domainRule);
+
+    return `<system_role>
+${role}
+</system_role>
+
+<thinking_protocol>
+Allocate dedicated internal thinking tokens to explore this problem systematically:
+1. Deconstruct requirements, invariants, and hidden edge cases.
+2. Formulate multiple candidate approaches and evaluate algorithmic trade-offs (space/time complexity, reliability).
+3. Actively stress-test the chosen solution against adversarial boundary inputs before writing code.
+4. Verify every single dependency, import, and interface contract.
+</thinking_protocol>
+
+<directive>
+${core}
+</directive>
+
+<output_deliverable>
+${outputSpec}
+</output_deliverable>`;
+  }
+
+  // OpenAI o3 / o3-mini Reasoning Effort Calibration
+  private static enhanceOpenAiO3Effort(prompt: string, targetRuntime: string, domainRule: DomainRule | null): string {
+    const core = this.stripFiller(prompt);
+    const outputSpec = this.resolveOutputSpec(domainRule);
+
+    return `[REASONING_EFFORT: HIGH]
+[TARGET_RUNTIME: ${targetRuntime}]
+
+GOAL:
+${core}
+
+INVARIANT CONSTRAINTS:
+1. Conduct extensive first-principles reasoning before emitting final code or artifacts.
+2. Produce zero unverified assumptions; resolve all mathematical, logical, and typing requirements end-to-end.
+3. Test edge-case inputs (null values, concurrency bounds, precision limits).
+
+DELIVERABLE FORMAT:
+${outputSpec}`;
   }
 
   // 2. Anthropic Claude 3.7 / 3.5 Sonnet XML

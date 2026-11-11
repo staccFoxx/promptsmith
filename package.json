@@ -1,8 +1,8 @@
 {
   "name": "promptsmith-ai",
   "displayName": "PromptSmith - Prompt Companion & Optimizer",
-  "description": "Maximizes performance, reasoning accuracy, and token efficiency for frontier AI models.",
-  "version": "2.5.1",
+  "description": "Precision prompt companion & reasoning calibrator. Optimizes token efficiency, extended thinking budgets, and accuracy for frontier AI models.",
+  "version": "2.6.0",
   "publisher": "Bartholomew",
   "icon": "icon.png",
   "license": "MIT",
@@ -16,7 +16,7 @@
     "url": "https://github.com/staccFoxx/bartholomew.git",
     "directory": "packages/promptsmith-vscode"
   },
-  "homepage": "https://bartholomew.info",
+  "homepage": "https://github.com/staccFoxx/bartholomew#readme",
   "engines": {
     "vscode": "^1.80.0"
   },
@@ -158,9 +158,8 @@
     "esbuild": "^0.20.0"
   },
   "author": {
-    "name": "Bartholomew Autonomous Circularity",
-    "email": "help@bartholomew.info",
-    "url": "https://bartholomew.info"
+    "name": "staccFoxx",
+    "url": "https://github.com/staccFoxx"
   },
   "bugs": {
     "url": "https://bartholomew.info/contact.html",
