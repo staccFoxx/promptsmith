@@ -669,6 +669,7 @@ export function activate(context: vscode.ExtensionContext) {
     const editor = vscode.window.activeTextEditor;
     if (!editor) {
       openMascotPanel();
+      vscode.window.showInformationMessage("Open a file or select text to scrub secrets, or paste into PromptSmith Studio.");
       return;
     }
     const sel = editor.selection;
