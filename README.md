@@ -2,14 +2,14 @@
   <img src="https://bartholomew.info/assets/promptsmith_mascot.png" width="140" height="140" alt="PromptSmith Mascot" />
 </p>
 
-<h1 align="center">PromptSmith (v2.4.2)</h1>
+<h1 align="center">PromptSmith (v2.6.3)</h1>
 
 <p align="center">
   <strong>Zero-Clutter Model Auto-Hook, Voice-to-Spec Dictation Refiner, Live Compiler Error Grounding, and Deterministic Prompt Optimizer for Cursor, Windsurf, Claude Code, Copilot, and VS Code.</strong>
 </p>
 
 <p align="center">
-  <a href="https://open-vsx.org/extension/bartholomew/promptsmith-ai"><img src="https://img.shields.io/badge/Open--VSX-v2.4.2-blue.svg?style=flat-square" alt="Open-VSX" /></a>
+  <a href="https://open-vsx.org/extension/bartholomew/promptsmith-ai"><img src="https://img.shields.io/badge/Open--VSX-v2.6.3-blue.svg?style=flat-square" alt="Open-VSX" /></a>
   <a href="https://bartholomew.info/promptsmith.html"><img src="https://img.shields.io/badge/Web_Studio-Live-gold.svg?style=flat-square" alt="Web Studio" /></a>
   <a href="https://bartholomew.info/demo.html"><img src="https://img.shields.io/badge/Interactive_Demo-45s_Walkthrough-cyan.svg?style=flat-square" alt="Interactive Demo" /></a>
   <a href="https://bartholomew.info/checkout/promptsmith"><img src="https://img.shields.io/badge/Passkey-$9/mo_or_$10-success.svg?style=flat-square" alt="Stripe Passkey" /></a>
@@ -26,7 +26,7 @@ When developers write raw prompts or dictate spoken thoughts, models spend self-
 
 ---
 
-## Key Capabilities in v2.4.2
+## Key Capabilities in v2.6.3
 
 ### 1. Zero-Clutter Model Auto-Hook Bridge (`detectActiveModelHook`)
 PromptSmith automatically detects which AI environment you are running inside (**Cursor**, **Windsurf**, **Antigravity**, **Claude Code**, **GitHub Copilot**, or **Cline**) on startup. When **Auto-Hook Active Model** is enabled, every optimized prompt is automatically copied to your clipboard and synced to your active model's native instruction file without cluttering your editor.

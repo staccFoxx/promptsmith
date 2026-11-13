@@ -2,7 +2,7 @@
   "name": "promptsmith-ai",
   "displayName": "PromptSmith - Prompt Companion & Optimizer",
   "description": "Precision prompt companion & reasoning calibrator. Optimizes token efficiency, extended thinking budgets, and accuracy for frontier AI models.",
-  "version": "2.6.2",
+  "version": "2.6.3",
   "publisher": "Bartholomew",
   "icon": "icon.png",
   "license": "MIT",

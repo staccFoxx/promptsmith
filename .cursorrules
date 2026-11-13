@@ -1,0 +1,53 @@
+# .cursorrules - Generated & Compacted by PromptSmith
+# Workspace: promptsmith-vscode | Stack: esbuild@0.20.0
+
+### Grounded Workspace & File Context
+- Workspace: `promptsmith-vscode`
+- Active File: `src/analyzer.ts` (Language: `typescript`)
+- Verified Stack & Packages: `esbuild@0.20.0`
+- Active File Symbols: `fetchUser`
+- Grounding Rule: Reuse existing project packages and symbol signatures above; do not invent unverified libraries.
+
+## Core Engineering Invariants
+- Write complete, production-ready code with zero TODO placeholders or truncated sections.
+- Preserve existing project module boundaries, naming conventions, and dependency versions.
+- Validate all external inputs, boundary conditions, and error states explicitly.
+- Prefer small, deterministic, testable functions over deeply nested stateful logic.
+
+## Active Task & Prompt Blueprint
+### PROMPTSMITH AUTONOMOUS LATERAL BRAINSTORMING BLUEPRINT
+**Objective**: Shatter conventional consensus thinking and engineer an unprecedented orthogonal path.
+
+#### Consensus Traps Strictly Forbidden
+Standard AI models will instinctively propose:
+  1. [FORBIDDEN] Elasticsearch / OpenSearch cluster with polling re-indexers
+*Rule: Do not propose, reference, or iterate upon any of the forbidden consensus tropes above.*
+
+#### Lateral Vector A: The Inverted Constraint (Jacobi/Munger)
+- **Premise**: Jacobi Inversion ('Invert, always invert'). Turns the problem on its head by eliminating the need to solve it in the orthodox direction.
+- **Provocation**: PO: What if the system functions flawlessly when the primary server is completely offline?
+- **Architectural Shift**: 1. Identify the orthodox component (Elasticsearch / OpenSearch cluster with polling re-indexers). 2. Treat its presence as a catastrophic failure of imagination. 3. Implement: Probabilistic roaring bitmaps / inverted bloom index embedded directly in SSD NVMe pages. 4. Result: Zero ongoing maintenance, infinite scaling bound.
+
+#### Lateral Vector B: Bisociative Collision (Mycelial Transport Networks)
+- **Biological/Physical Source**: Mycelial Transport Networks
+- **Mechanism**: Decentralized nutrient-driven pressure gradients without a central routing ledger.
+- **Software Embodiment**: Instead of a centralized message broker, nodes push work along highest-conductivity gradients; dead nodes wither while congested nodes naturally shed load.
+
+#### Lateral Vector C: Paradigm Transcendence (The Moonshot)
+- **Provocation**: PO: The operation takes 0 milliseconds because the answer is already mathematically bounded before the request is issued.
+- **Mechanism**: Replace runtime coordination with deterministic edge invariants or zero-knowledge mathematical guarantees.
+
+#### Synthesis Mandate
+1. Present the 3 orthogonal options in an executive comparison matrix (Trade-offs, Novelty Index 1-100, Scalability Ceiling).
+2. Deep-dive into the single most breakthrough path, delivering concrete runnable architecture, interfaces, and mathematical bounds.
+3. Highlight precisely why this solution out-thinks standard AI outputs by at least an order of magnitude.
+
+### Disciplinary Equalizer: Everyday Creator & Specialist (Zero Technical Barrier & Universal Idea Synthesis)
+- Deconstruct ideas into clean, welcoming step-by-step milestones with zero intimidating technical jargon.
+- Use concrete, relatable everyday analogies so the logic is intuitive and transparent to any age group.
+- Guarantee that all generated code or instructions are 100% complete, runnable, and explained simply.
+- Encourage creative exploration while silently infusing production-grade engineering best practices under the hood.
+
+### Cross-Pollination Bridge (Leveling the Field across Design & Engineering)
+- Silently inject production-grade error-handling and security safeguards so the user's project is enterprise-ready from day one.
+- Provide a clear 'Next Steps' checklist so the creator knows exactly how to test and run their creation.

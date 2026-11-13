@@ -155,12 +155,12 @@ export class PromptSmithDashboardPanel {
   <title>PromptSmith // Optimization Matrix</title>
   <style>
     :root {
-      --bg: var(--vscode-editor-background, #080a10);
-      --card-bg: var(--vscode-sideBar-background, #0d111a);
-      --fg: var(--vscode-editor-foreground, #e2e8f0);
-      --border: var(--vscode-panel-border, rgba(255, 255, 255, 0.08));
-      --cyan: #06b6d4;
-      --emerald: #10b981;
+      --bg: #0b0f17;
+      --card-bg: #131a26;
+      --fg: #f1f5f9;
+      --border: rgba(148, 163, 184, 0.16);
+      --cyan: #38bdf8;
+      --emerald: #34d399;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {

@@ -60,13 +60,13 @@ export class PromptWebviewProvider {
   <title>PromptSmith Studio</title>
   <style>
     :root {
-      --bg: var(--vscode-editor-background, #080c16);
-      --fg: var(--vscode-editor-foreground, #e2e8f0);
-      --card: rgba(14, 20, 36, 0.75);
-      --card-border: rgba(255, 255, 255, 0.09);
+      --bg: #0b0f17;
+      --fg: #f1f5f9;
+      --card: #131a26;
+      --card-border: rgba(148, 163, 184, 0.16);
       --accent: #38bdf8;
       --accent-glow: rgba(56, 189, 248, 0.25);
-      --emerald: #10b981;
+      --emerald: #34d399;
       --purple: #a855f7;
       --amber: #f59e0b;
       --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;

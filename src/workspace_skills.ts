@@ -503,21 +503,7 @@ export class PromptWorkspaceToolkit {
       return String(newClause).trim();
     });
 
-    // Convert spoken casing & symbol shorthand
-    text = text.replace(/\bsnake\s+case\s+([a-zA-Z0-9]+(?:\s+[a-zA-Z0-9]+){0,3})/gi, (_m, words) => {
-      corrections++;
-      return String(words).trim().toLowerCase().replace(/\s+/g, "_");
-    });
-    text = text.replace(/\bcamel\s+case\s+([a-zA-Z0-9]+(?:\s+[a-zA-Z0-9]+){0,3})/gi, (_m, words) => {
-      corrections++;
-      const parts = String(words).trim().toLowerCase().split(/\s+/);
-      return parts[0] + parts.slice(1).map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join("");
-    });
-    text = text.replace(/\bpascal\s+case\s+([a-zA-Z0-9]+(?:\s+[a-zA-Z0-9]+){0,3})/gi, (_m, words) => {
-      corrections++;
-      return String(words).trim().toLowerCase().split(/\s+/).map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join("");
-    });
-
+    // Convert spoken symbol shorthand before casing so ".env" / "=>" aren't swallowed as identifier words
     const spokenSymbols: [RegExp, string][] = [
       [/\bdot\s+env\b/gi, ".env"],
       [/\bpackage\s+dot\s+json\b/gi, "package.json"],
@@ -532,6 +518,40 @@ export class PromptWorkspaceToolkit {
         text = text.replace(rx, sym);
       }
     }
+
+    // Convert spoken casing shorthand, stopping before English conjunctions/prepositions
+    const stopWords = new Set(["and", "or", "in", "on", "at", "to", "for", "from", "with", "using", "into", "that", "which", "is", "are", "the", "a", "an", "of", "by", "as"]);
+    const splitIdentifierWords = (rawWords: string): { ident: string[]; trailing: string[] } => {
+      const tokens = rawWords.trim().split(/\s+/);
+      const ident: string[] = [];
+      for (let i = 0; i < tokens.length; i++) {
+        if (i > 0 && stopWords.has(tokens[i].toLowerCase())) {
+          return { ident, trailing: tokens.slice(i) };
+        }
+        ident.push(tokens[i]);
+      }
+      return { ident, trailing: [] };
+    };
+
+    text = text.replace(/\bsnake\s+case\s+([a-zA-Z0-9]+(?:\s+[a-zA-Z0-9]+){0,3})/gi, (_m, words) => {
+      corrections++;
+      const { ident, trailing } = splitIdentifierWords(String(words));
+      const formatted = ident.map(w => w.toLowerCase()).join("_");
+      return trailing.length > 0 ? `${formatted} ${trailing.join(" ")}` : formatted;
+    });
+    text = text.replace(/\bcamel\s+case\s+([a-zA-Z0-9]+(?:\s+[a-zA-Z0-9]+){0,3})/gi, (_m, words) => {
+      corrections++;
+      const { ident, trailing } = splitIdentifierWords(String(words));
+      const parts = ident.map(w => w.toLowerCase());
+      const formatted = parts[0] + parts.slice(1).map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join("");
+      return trailing.length > 0 ? `${formatted} ${trailing.join(" ")}` : formatted;
+    });
+    text = text.replace(/\bpascal\s+case\s+([a-zA-Z0-9]+(?:\s+[a-zA-Z0-9]+){0,3})/gi, (_m, words) => {
+      corrections++;
+      const { ident, trailing } = splitIdentifierWords(String(words));
+      const formatted = ident.map((w: string) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join("");
+      return trailing.length > 0 ? `${formatted} ${trailing.join(" ")}` : formatted;
+    });
 
     // Strip verbal fillers
     const fillerRx = /\b(?:uh+|um+|uhm+|er+|ah+|like\s+basically|you\s+know\s+what\s+i\s+mean|you\s+know|sort\s+of\s+like|kind\s+of\s+like|so\s+yeah|i\s+guess\s+like)\b[,.\s]*/gi;
